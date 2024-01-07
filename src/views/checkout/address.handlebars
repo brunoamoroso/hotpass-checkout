@@ -1,0 +1,109 @@
+<script type="text/javascript">
+  async function handleZipcodeBlur(){
+    const zipCodeValue = event.target.value;
+    try{
+      const apiURL = `https://viacep.com.br/ws/88802202/json`;
+      const zipCodeAPI = await fetch(apiURL);
+      const addressObj = await zipCodeAPI.json();
+      console.log(addressObj);
+
+      document.getElementById('city').value = addressObj.localidade;
+      document.getElementById('uf').value = addressObj.uf;
+      document.getElementById('neighborhood').value = addressObj.bairro;
+      document.getElementById('street').value = addressObj.logradouro;
+    }catch(err){
+      console.log(err)
+    }
+  }
+</script>
+
+<div class="col-5">
+  <main>
+    <div class="stepper"></div>
+    <div class="box">
+      <form action="/checkout/address" method="post">
+        <div class="row">
+          <div class="col-12">
+            <div class="row">
+              <div class="col mb-3">
+                <label for="zipcode" class="form-label">CEP</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="zipcode"
+                  name="zipcode"
+                  onblur="handleZipcodeBlur()"
+                />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="city" class="form-label">Cidade</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  aria-label="Input de Rua apenas leitura"
+                  id="city"
+                  name="city"
+                />
+              </div>
+               <div class="col-3 mb-3">
+                <label for="uf" class="form-label">UF</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  aria-label="Input de Rua apenas leitura"
+                  id="uf"
+                  name="uf"
+                />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="neighborhood" class="form-label">Bairro</label>
+                <input type="text" class="form-control" id="neighborhood" name="neighborhood"/>
+              </div>
+            </div>
+             <div class="row">
+              <div class="col mb-3">
+                <label for="street" class="form-label">Rua</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  aria-label="Input de Rua apenas leitura"
+                  id="street"
+                  name="street"
+                />
+              </div>
+               <div class="col-3 mb-3">
+                <label for="number" class="form-label">N°</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="number"
+                  name="number"
+                />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-5">
+                <label for="complement" class="form-label">Complemento</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="complement"
+                  name="complement"
+                />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary">Avançar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>

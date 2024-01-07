@@ -1,0 +1,59 @@
+<div class="col-4">
+  <main>
+    <div class="stepper"></div>
+    <div class="box">
+      <form action="/checkout/payment" class="needs-validation" method="post" novalidate>
+        <div class="row">
+          <div class="col-12">
+            <div class="row">
+              <div class="col mb-3">
+                <select name="" id="" class="form-select" disabled>
+                  <label for="installments" class="form-label">Quantidade de parcelas</label>
+                  <option name="installments" value="">1x de {{plan.price}}</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="number" class="form-label">Número do Cartão</label>
+                <input type="text"
+                  class="form-control"
+                id="number" name="number" aria-describedby="fullnameValidation" placeholder="0000 0000 0000 0000"/>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="holder_name" class="form-label">Nome como está no cartão</label>
+                <input type="holder_name"
+                  class="form-control"
+                  id="holder_name" name="holder_name" 
+                  aria-describedby="emailValidation" placeholder="NOME COMO ESTÁ NO CARTÃO"/>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="due" class="form-label">Validade</label>
+                <input type="text" 
+                  class="form-control"
+                  id="due" name="due"
+                  aria-describedby="cpfValidation" placeholder="MM/AA"/>
+              </div>
+              <div class="col mb-3">
+                <label for="cvv" class="form-label">CVC</label>
+                <input type="text" 
+                  class="form-control"
+                  id="cvv" name="cvv"
+                  aria-describedby="cpfValidation" placeholder="000"/>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary">Avançar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>

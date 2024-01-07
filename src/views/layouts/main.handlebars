@@ -1,0 +1,53 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout - Identificação</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <nav>
+      <p>Logo HotSense</p>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-10 offset-3">
+          <div class="row">
+
+            {{{body}}}
+
+            <div class="col-3 box">
+              <aside>
+                <h3>Pedido</h3>
+                <div>
+                  <div class="order-item">
+                    <span class="order-item-name">{{plan.name}}</span>
+                    <span class="order-item-price">{{plan.price}}</span>
+                  </div>
+                  <hr />
+                  <div class="order-total">
+                    <span class="order-total-title">Total</span>
+                    <span class="order-total-price">{{plan.price}}</span>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
