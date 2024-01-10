@@ -42,6 +42,12 @@
                     <span class="order-total-price">{{plan.price}}</span>
                   </div>
                 </div>
+
+                {{#if customerExists}}
+                <form action="/checkout/confirmPayment" method="POST">
+                  <button class="btn btn-primary">Confirmar Compra</button>
+                </form>
+                {{/if}}
               </aside>
             </div>
 
