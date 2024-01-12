@@ -5,7 +5,7 @@ import identifyValidateDate from '../middlewares/validators/identifyValidator.mj
 const router = express.Router();
 
 // router.get("/", CheckoutController.identify);
-router.get("/:id/:planId", CheckoutController.identify);
+router.get("/:botName/:id/:planId", CheckoutController.identify);
 
 router.post('/identify', identifyValidateDate, CheckoutController.identifyPost);
 router.post('/address', CheckoutController.addressPost);

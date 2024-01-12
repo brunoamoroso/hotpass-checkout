@@ -5,6 +5,10 @@ import {
 } from "@pagarme/pagarme-nodejs-sdk";
 import client from "../utils/pgmeClient.mjs";
 import base64 from "base-64";
+import axios from 'axios';
+import { configDotenv } from "dotenv";
+
+configDotenv();
 
 export default class CheckoutController {
   static async identify(req, res) {
@@ -12,6 +16,9 @@ export default class CheckoutController {
     const userId = req.params.id;
     const planId = req.params.planId;
     let customerExists = false;
+
+    req.session.botName = req.params.botName;
+    req.session.userId = userId;
 
     try {
       const customerController = new CustomersController(client);
@@ -25,7 +32,7 @@ export default class CheckoutController {
         undefined
       );
 
-      req.session.customer = result.data[1];
+      req.session.customer = result.data[0];
       customerExists = true;
     } catch (err) {
       if (err instanceof ApiError) {
@@ -49,7 +56,6 @@ export default class CheckoutController {
         price: priceFormat.format(result.items[0].pricingScheme.price / 100),
       };
 
-      req.session.userId = userId;
       req.session.plan = plan;
 
       if (customerExists) {
@@ -234,6 +240,16 @@ export default class CheckoutController {
         }
       ).then(resp => {
         if(resp.status === 200){
+          const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+          const data = {
+            channel_id: '-1002078103455',
+            customer_chat_id: req.session.customer.code,
+            customer_pgme_id: req.session.customer.id,
+            plan_pgme_id: req.session.plan.id,
+            type_item_bought: "subscription",
+            bot_name: req.session.botName,
+          }
+          axios.post(webhookURL, data);
           return resp.json();
         }
       });
