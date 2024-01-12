@@ -214,7 +214,6 @@ export default class CheckoutController {
 
   static async confirmPayment(req, res){
     try{
-      
       // const addressObj = req.session.customer.address;
       const bodySubscriptionOrder = {
         code: req.session.plan.id,
@@ -242,7 +241,6 @@ export default class CheckoutController {
         if(resp.status === 200){
           const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
           const data = {
-            channel_id: '-1002078103455',
             customer_chat_id: req.session.customer.code,
             customer_pgme_id: req.session.customer.id,
             plan_pgme_id: req.session.plan.id,
@@ -250,11 +248,9 @@ export default class CheckoutController {
             bot_name: req.session.botName,
           }
           axios.post(webhookURL, data);
-          return resp.json();
         }
+        return resp.json();
       });
-
-      console.log(response);
 
     }catch (err) {
       throw new Error(err);
