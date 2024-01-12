@@ -1,7 +1,6 @@
 <div class="col-3 box">
   <h3>Endereços</h3>
   <div class="form-check">
-        <input type="radio" name="address" class="form-check-input" id={{customer.address.id}} checked>
         <label for={{customer.address.id}} class="form-check-label">{{customer.address.zipCode}}<label>
             <span>{{customer.address.street}}, {{customer.address.number}}</span>
             <span>{{customer.address.neighborhood}} - {{customer.address.city}}</span>
@@ -11,7 +10,6 @@
   <h3>Cartões</h3>
   {{#each customerCards}}
     <div class="form-check">
-        <input type="radio" name="card" id={{this.id}} class="form-check-input">
         <label for={{this.id}} class="form-check-label">{{this.brand}}</label>
         <span>{{this.lastFourDigits}} - {{this.expMonth}}/{{this.expYear}}</span>
     </div>
