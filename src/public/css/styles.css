@@ -1,18 +1,72 @@
-html,body{
-    background-color: #efefef;
+html,
+body {
+  background-color: #efefef;
 }
 
-.box{
-    background-color: #FFF;
-    border-radius: 8px;
-    padding: 24px;
-    border:2px solid #e2e2e2;
-    border-bottom-width: 4px;
+.box {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  border: 2px solid #e2e2e2;
+  border-bottom-width: 4px;
 }
 
-nav{
-    background-color: #FFF;
-    height: 64px;
-    margin-bottom: 64px;
-    border-bottom: 2px solid #e6e6e6;
+nav {
+  background-color: #fff;
+  height: 64px;
+  margin-bottom: 48px;
+  border-bottom: 2px solid #e6e6e6;
+}
+
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+
+.stepper-item {
+  --size: 2.5rem;
+  --spacing: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+
+.stepper-icon {
+    content: "";
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    margin: 1rem auto 0;
+    background-color: #d1d1d1;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
+
+.stepper-item:not(:last-child):after {
+    content: "";
+    position: relative;
+    top: 2.25rem;
+    width: calc(100% - var(--size) - calc(var(--spacing) * 2));
+    left: calc(50% + calc(var(--size) / 2 + var(--spacing)));
+    height: 2px;
+    background-color: #d1d1d1;
+    order: -1;
+}
+
+.done{
+    color: #044cb8;
+    background-color: #9dc4ff;
+}
+
+.active{
+    color: #FFF;
+    background-color: #0d6efd;
 }
