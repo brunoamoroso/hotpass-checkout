@@ -23,30 +23,44 @@
 
     <div class="container-fluid">
       <div class="row">
-        <div class="col-10 offset-3">
+        <div class="col-6 offset-3">
           <div class="row">
+            <div class="col-12">
+              <div class="row">
+                <div class="line"></div>
+                <div class="col">
+                  <div class="step-wrapper">1</div>
+                  <span>Label</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 pe-0">
+              <div class="alert alert-warning">
+                Os dados aqui solicitados são utilizados pelas plataformas financeiras e estão seguro com elas.
+              </div>
+            </div>
 
             {{{body}}}
 
-            <div class="col-3 box">
+            <div class="col-5 box">
               <aside>
                 <h3>Pedido</h3>
                 <div>
                   <div class="order-item">
-                    <span class="order-item-name">{{plan.name}}</span>
-                    <span class="order-item-price">{{plan.price}}</span>
+                    <span class="order-item-name">{{item.name}}</span>
+                    <span class="order-item-price">{{item.price}}</span>
                   </div>
                   <hr />
                   <div class="order-total">
                     <span class="order-total-title">Total</span>
-                    <span class="order-total-price">{{plan.price}}</span>
+                    <span class="order-total-price">{{item.price}}</span>
                   </div>
                 </div>
 
                 {{#if customerExists}}
-                <form action="/checkout/confirmPayment" method="POST">
-                  <button class="btn btn-primary">Confirmar Compra</button>
-                </form>
+                  <form action="/checkout/confirmPayment" method="POST">
+                    <button class="btn btn-primary">Confirmar Compra</button>
+                  </form>
                 {{/if}}
               </aside>
             </div>

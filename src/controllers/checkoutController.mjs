@@ -5,17 +5,24 @@ import {
 } from "@pagarme/pagarme-nodejs-sdk";
 import client from "../utils/pgmeClient.mjs";
 import base64 from "base-64";
-import axios from 'axios';
+import axios from "axios";
 import { configDotenv } from "dotenv";
+import { getModelByTenant } from "../utils/tenantUtils.mjs";
+import packSchema from "../schemas/Pack.mjs";
+import botConfigSchema from "../schemas/BotConfig.mjs";
 
 configDotenv();
 
 export default class CheckoutController {
   static async identify(req, res) {
-    //remember to change planId to itemId and then verify if it's a pack or a plan that'll be bought
     const userId = req.params.id;
-    const planId = req.params.planId;
+    const itemId = req.params.itemId;
     let customerExists = false;
+    let item = {};
+    const priceFormat = new Intl.NumberFormat("pt-br", {
+      style: "currency",
+      currency: "BRL",
+    });
 
     req.session.botName = req.params.botName;
     req.session.userId = userId;
@@ -33,57 +40,82 @@ export default class CheckoutController {
       );
 
       req.session.customer = result.data[0];
-      customerExists = true;
-    } catch (err) {
-      if (err instanceof ApiError) {
-        console.log(err);
-      }
-      throw new Error(err);
-    }
 
-    try {
-      const plansController = new PlansController(client);
-      const { result } = await plansController.getPlan(planId);
+      try {
+        const customerController = new CustomersController(client);
+        const { result, ...httpResponse } = await customerController.getCards(
+          req.session.customer.id
+        );
 
-      const priceFormat = new Intl.NumberFormat("pt-br", {
-        style: "currency",
-        currency: "BRL",
-      });
-
-      const plan = {
-        id: result.id,
-        name: result.name,
-        price: priceFormat.format(result.items[0].pricingScheme.price / 100),
-      };
-
-      req.session.plan = plan;
-
-      if (customerExists) {
-        try {
-          const customerController = new CustomersController(client);
-          const { result, ...httpResponse } =
-            await customerController.getCards(req.session.customer.id);
-
-          req.session.customerCards = result.data;
-          customerExists = true;
-        } catch (err) {
-          if (err instanceof ApiError) {
-            console.log(err);
-          }
-          throw new Error(err);
+        req.session.customerCards = result.data;
+        customerExists = true;
+      } catch (err) {
+        if (err instanceof ApiError) {
+          console.log(err);
+          return;
         }
-
-        res.render("checkout/review", { plan, customer: req.session.customer, customerCards: req.session.customerCards, customerExists });
-        return;
       }
-
-      res.render("checkout/identify", { plan });
     } catch (err) {
       if (err instanceof ApiError) {
         console.log(err);
       }
       throw new Error(err);
     }
+
+    if (itemId.includes("plan")) {
+      try {
+        const plansController = new PlansController(client);
+        const { result } = await plansController.getPlan(itemId);
+
+        item = {
+          id: result.id,
+          name: result.name,
+          price: priceFormat.format(result.items[0].pricingScheme.price / 100),
+          type: "subscription",
+        };
+
+        req.session.item = item;
+      } catch (err) {
+        if (err instanceof ApiError) {
+          console.log(err);
+        }
+        throw new Error(err);
+      }
+    } else {
+      //if it's a pack
+      try {
+        const Packs = getModelByTenant(
+          req.session.botName + "db",
+          "Packs",
+          packSchema
+        );
+        const pack = await Packs.findById(itemId).lean();
+
+        item = {
+          id: pack._id,
+          name: pack.title,
+          price: priceFormat.format(pack.price / 100),
+          amount: pack.price,
+          type: "pack",
+        };
+
+        req.session.item = item;
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    if (customerExists) {
+      res.render("checkout/review", {
+        item,
+        customer: req.session.customer,
+        customerCards: req.session.customerCards,
+        customerExists,
+      });
+      return;
+    }
+
+    res.render("checkout/identify", { item });
   }
 
   static async identifyPost(req, res) {
@@ -91,7 +123,7 @@ export default class CheckoutController {
     const result = validationResult(req).mapped();
     const { fullname, email, cpf, cellphone } = req.body;
     let fieldErrors = {};
-    const plan = req.session.plan;
+    const item = req.session.item;
     const userId = req.session.userId;
 
     // validated the fields and then render if necessary
@@ -101,7 +133,7 @@ export default class CheckoutController {
           fieldErrors[error] = true;
         }
       }
-      res.render("checkout/identify", { result, fieldErrors, plan });
+      res.render("checkout/identify", { result, fieldErrors, item });
       return;
     }
 
@@ -130,7 +162,7 @@ export default class CheckoutController {
 
     req.session.customer = bodyCustomer;
 
-    res.render("checkout/address", { plan });
+    res.render("checkout/address", { item });
   }
 
   static async addressPost(req, res) {
@@ -159,7 +191,7 @@ export default class CheckoutController {
       if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
         req.session.customer.id = result.id;
         req.session.customer = customer;
-        res.render("checkout/payment", { plan: req.session.plan });
+        res.render("checkout/payment", { item: req.session.item });
       }
     } catch (err) {
       if (err instanceof ApiError) {
@@ -175,7 +207,6 @@ export default class CheckoutController {
     const exp_year = parseInt(due.slice(3, 5));
 
     try {
-
       const bodyCreateCard = {
         number: number,
         holder_name: holder_name,
@@ -189,21 +220,29 @@ export default class CheckoutController {
       const user = process.env.PGMSK;
       const password = "";
 
-      const responseCreateCard = await fetch(`https://api.pagar.me/core/v5/customers/${req.session.customer.id}/cards`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Basic ${base64.encode(`${user}:${password}`)}`,
-        },
-        body: JSON.stringify(bodyCreateCard),
-      });
+      const responseCreateCard = await fetch(
+        `https://api.pagar.me/core/v5/customers/${req.session.customer.id}/cards`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+          },
+          body: JSON.stringify(bodyCreateCard),
+        }
+      );
 
       const dataCard = await responseCreateCard.json();
       req.session.customerCards = dataCard;
 
       const customerExists = true;
 
-      res.render("checkout/review", {plan: req.session.plan, customer: req.session.customer, customerCards: dataCard, customerExists });
+      res.render("checkout/review", {
+        item: req.session.item,
+        customer: req.session.customer,
+        customerCards: dataCard,
+        customerExists,
+      });
     } catch (err) {
       if (err instanceof ApiError) {
         console.log(err);
@@ -212,48 +251,106 @@ export default class CheckoutController {
     }
   }
 
-  static async confirmPayment(req, res){
-    try{
-      // const addressObj = req.session.customer.address;
-      const bodySubscriptionOrder = {
-        code: req.session.plan.id,
-        plan_id: req.session.plan.id,
-        customer_id: req.session.customer.id,
-        payment_method: "credit_card",
-        card_id: req.session.customerCards[0].id,
-        installments: 1,
-      };
+  static async confirmPayment(req, res) {
+    const user = process.env.PGMSK;
+    const password = "";
 
-      const user = process.env.PGMSK;
-      const password = "";
+    const botConfig = getModelByTenant(req.session.botName + 'db', "BotConfig", botConfigSchema);
+    const BotConfigs = await botConfig.findOne().lean();
 
-      const response = await fetch(
-        "https://api.pagar.me/core/v5/subscriptions",
-        {
+    if (req.session.item.type === "subscription") {
+      try {
+        const bodySubscriptionOrder = {
+          code: req.session.item.id,
+          plan_id: req.session.item.id,
+          customer_id: req.session.customer.id,
+          payment_method: "credit_card",
+          card_id: req.session.customerCards[0].id,
+          installments: 1,
+          split: {
+            enabled: true,
+            rules: BotConfigs.split_rules
+          }
+        };
+        
+
+        await fetch("https://api.pagar.me/core/v5/subscriptions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Basic ${base64.encode(`${user}:${password}`)}`,
+            Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
           },
           body: JSON.stringify(bodySubscriptionOrder),
-        }
-      ).then(resp => {
-        if(resp.status === 200){
-          const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
-          const data = {
-            customer_chat_id: req.session.customer.code,
-            customer_pgme_id: req.session.customer.id,
-            plan_pgme_id: req.session.plan.id,
-            type_item_bought: "subscription",
-            bot_name: req.session.botName,
+        }).then((resp) => {
+          if (resp.status === 200) {
+            const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+            const data = {
+              customer_chat_id: req.session.customer.code,
+              customer_pgme_id: req.session.customer.id,
+              plan_pgme_id: req.session.item.id,
+              type_item_bought: "subscription",
+              bot_name: req.session.botName,
+            };
+            axios.post(webhookURL, data);
           }
-          axios.post(webhookURL, data);
-        }
-        return resp.json();
-      });
+          return resp.json();
+        });
+      } catch (err) {
+        throw new Error(err);
+      }
+    }
 
-    }catch (err) {
-      throw new Error(err);
+    if (req.session.item.type === "pack") {
+      try {
+        const bodyPackOrder = {
+          code: req.session.customer.id,
+          customer_id: req.session.customer.id,
+          items: [
+            {
+              amount: req.session.item.amount,
+              description: "Pack",
+              quantity: 1,
+              code: req.session.item.id,
+            },
+          ],
+          payments: [
+            {
+              payment_method: "credit_card",
+              credit_card: {
+                card_id: req.session.customerCards[0].id,
+              },
+              amount: req.session.item.amount,
+              split: BotConfigs.split_rules
+            },
+          ],
+          closed: true,
+        };
+
+        await fetch("https://api.pagar.me/core/v5/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+          },
+          body: JSON.stringify(bodyPackOrder),
+        }).then((resp) => {
+          if(resp.status === 200){
+            const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+            const data = {
+              customer_chat_id: req.session.customer.code,
+              customer_pgme_id: req.session.customer.id,
+              pack_id: req.session.item.id,
+              type_item_bought: "pack",
+              bot_name: req.session.botName
+            };
+            axios.post(webhookURL, data);
+          }
+
+          return resp.json();
+        });
+      } catch (err) {
+        console.log(err);
+      }
     }
   }
 }
