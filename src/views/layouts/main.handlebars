@@ -14,6 +14,10 @@
       integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
       crossorigin="anonymous"
     ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
@@ -23,46 +27,76 @@
 
     <div class="container-fluid">
       <div class="row">
-        <div class="col-6 offset-3">
+        <div
+          class="col-xs-12 col-md-12 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3"
+        >
           <div class="row">
             <div class="col-12">
-              <div class="row">
-                <div class="line"></div>
-                <div class="col">
-                  <div class="step-wrapper">1</div>
-                  <span>Label</span>
+              <div class="stepper">
+                <div class="stepper-item">
+                  <div
+                    class="stepper-icon {{stepper.step1.status}}"
+                  >{{{stepper.step1.label}}}</div>
+                  <span class="stepper-label">Identificação</span>
+                </div>
+                <div class="stepper-item">
+                  <div
+                    class="stepper-icon {{stepper.step2.status}}"
+                  >{{{stepper.step2.label}}}</div>
+                  <span class="stepper-label">Endereço</span>
+                </div>
+                <div class="stepper-item">
+                  <div
+                    class="stepper-icon {{stepper.step3.status}}"
+                  >{{{stepper.step3.label}}}</div>
+                  <span class="stepper-label">Pagamento</span>
+                </div>
+                <div class="stepper-item">
+                  <div
+                    class="stepper-icon {{stepper.step4.status}}"
+                  >{{{stepper.step4.label}}}</div>
+                  <span class="stepper-label">Revisão</span>
                 </div>
               </div>
             </div>
-            <div class="col-12 pe-0">
+            <div class="col-12 pe-md-0">
               <div class="alert alert-warning">
-                Os dados aqui solicitados são utilizados pelas plataformas financeiras e estão seguro com elas.
+                Os dados aqui solicitados são utilizados pelas plataformas
+                financeiras e estão seguro com elas.
               </div>
             </div>
 
-            {{{body}}}
+            <div class="col">
+              <div class="row flex-column-reverse flex-md-row">
 
-            <div class="col-5 box">
-              <aside>
-                <h3>Pedido</h3>
-                <div>
-                  <div class="order-item">
-                    <span class="order-item-name">{{item.name}}</span>
-                    <span class="order-item-price">{{item.price}}</span>
-                  </div>
-                  <hr />
-                  <div class="order-total">
-                    <span class="order-total-title">Total</span>
-                    <span class="order-total-price">{{item.price}}</span>
+                {{{body}}}
+
+                <div class="col-xs-12 col-md-5 pb-3 pb-md-0">
+                  <div class="box">
+                    <aside>
+                      <h3>Pedido</h3>
+                      <div>
+                        <div class="order-item">
+                          <span class="order-item-name">{{item.name}}</span>
+                          <span class="order-item-price">{{item.price}}</span>
+                        </div>
+                        <hr />
+                        <div class="order-total">
+                          <span class="order-total-title">Total</span>
+                          <span class="order-total-price">{{item.price}}</span>
+                        </div>
+                      </div>
+
+                      {{#if customerExists}}
+                        <form action="/checkout/confirmPayment" method="POST">
+                          <button class="btn btn-primary">Confirmar Compra</button>
+                        </form>
+                      {{/if}}
+                    </aside>
                   </div>
                 </div>
 
-                {{#if customerExists}}
-                  <form action="/checkout/confirmPayment" method="POST">
-                    <button class="btn btn-primary">Confirmar Compra</button>
-                  </form>
-                {{/if}}
-              </aside>
+              </div>
             </div>
 
           </div>

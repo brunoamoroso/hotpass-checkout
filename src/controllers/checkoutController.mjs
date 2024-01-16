@@ -24,6 +24,25 @@ export default class CheckoutController {
       currency: "BRL",
     });
 
+    let stepper = {
+      step1: {
+        status: "active",
+        label: '1',
+      },
+      step2: {
+        status: "",
+        label: "2",
+      },
+      step3: {
+        status: "",
+        label: "3",
+      },
+      step4: {
+        status: "",
+        label: "4",
+      },
+    };
+
     req.session.botName = req.params.botName;
     req.session.userId = userId;
 
@@ -49,6 +68,24 @@ export default class CheckoutController {
 
         req.session.customerCards = result.data;
         customerExists = true;
+        stepper = {
+          step1: {
+            status: "done",
+            label: '<i class="bi bi-check-lg"></i>',
+          },
+          step2: {
+            status: "done",
+            label: '<i class="bi bi-check-lg"></i>',
+          },
+          step3: {
+            status: "done",
+            label: '<i class="bi bi-check-lg"></i>',
+          },
+          step4: {
+            status: "active",
+            label: "4",
+          },
+        };
       } catch (err) {
         if (err instanceof ApiError) {
           console.log(err);
@@ -111,11 +148,12 @@ export default class CheckoutController {
         customer: req.session.customer,
         customerCards: req.session.customerCards,
         customerExists,
+        stepper
       });
       return;
     }
 
-    res.render("checkout/identify", { item });
+    res.render("checkout/identify", { item, stepper });
   }
 
   static async identifyPost(req, res) {
@@ -125,6 +163,25 @@ export default class CheckoutController {
     let fieldErrors = {};
     const item = req.session.item;
     const userId = req.session.userId;
+
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "active",
+        label: "2",
+      },
+      step3: {
+        status: "",
+        label: "3",
+      },
+      step4: {
+        status: "",
+        label: "4",
+      },
+    };
 
     // validated the fields and then render if necessary
     if (!errors.isEmpty()) {
@@ -162,10 +219,29 @@ export default class CheckoutController {
 
     req.session.customer = bodyCustomer;
 
-    res.render("checkout/address", { item });
+    res.render("checkout/address", { item, stepper });
   }
 
   static async addressPost(req, res) {
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "active",
+        label: "3",
+      },
+      step4: {
+        status: "",
+        label: "4",
+      },
+    };
+
     const { zipcode, city, uf, neighborhood, street, number, complement } =
       req.body;
     let customer = req.session.customer;
@@ -191,7 +267,7 @@ export default class CheckoutController {
       if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
         req.session.customer.id = result.id;
         req.session.customer = customer;
-        res.render("checkout/payment", { item: req.session.item });
+        res.render("checkout/payment", { item: req.session.item, stepper });
       }
     } catch (err) {
       if (err instanceof ApiError) {
@@ -202,6 +278,25 @@ export default class CheckoutController {
   }
 
   static async paymentPost(req, res) {
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step4: {
+        status: "active",
+        label: "4",
+      },
+    };
+
     const { number, holder_name, due, cvv } = req.body;
     const exp_month = parseInt(due.slice(0, 2));
     const exp_year = parseInt(due.slice(3, 5));
@@ -242,6 +337,7 @@ export default class CheckoutController {
         customer: req.session.customer,
         customerCards: dataCard,
         customerExists,
+        stepper
       });
     } catch (err) {
       if (err instanceof ApiError) {
@@ -255,7 +351,11 @@ export default class CheckoutController {
     const user = process.env.PGMSK;
     const password = "";
 
-    const botConfig = getModelByTenant(req.session.botName + 'db', "BotConfig", botConfigSchema);
+    const botConfig = getModelByTenant(
+      req.session.botName + "db",
+      "BotConfig",
+      botConfigSchema
+    );
     const BotConfigs = await botConfig.findOne().lean();
 
     if (req.session.item.type === "subscription") {
@@ -269,10 +369,9 @@ export default class CheckoutController {
           installments: 1,
           split: {
             enabled: true,
-            rules: BotConfigs.split_rules
-          }
+            rules: BotConfigs.split_rules,
+          },
         };
-        
 
         await fetch("https://api.pagar.me/core/v5/subscriptions", {
           method: "POST",
@@ -320,7 +419,7 @@ export default class CheckoutController {
                 card_id: req.session.customerCards[0].id,
               },
               amount: req.session.item.amount,
-              split: BotConfigs.split_rules
+              split: BotConfigs.split_rules,
             },
           ],
           closed: true,
@@ -334,14 +433,14 @@ export default class CheckoutController {
           },
           body: JSON.stringify(bodyPackOrder),
         }).then((resp) => {
-          if(resp.status === 200){
+          if (resp.status === 200) {
             const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
             const data = {
               customer_chat_id: req.session.customer.code,
               customer_pgme_id: req.session.customer.id,
               pack_id: req.session.item.id,
               type_item_bought: "pack",
-              bot_name: req.session.botName
+              bot_name: req.session.botName,
             };
             axios.post(webhookURL, data);
           }
