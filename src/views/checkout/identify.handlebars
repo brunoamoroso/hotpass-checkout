@@ -1,81 +1,172 @@
+<script>
+  function handleBackspace(value){
+    return value = value.slice(0, -1);
+  }
+
+  function handleCPFMask() {
+    event.preventDefault();
+    event.stopPropagation();
+    const isValidKey = /([\d]|Backspace)/g.test(event.key);
+    const inputId = event.target.id;
+    const input = document.getElementById(inputId);
+
+    if (!isValidKey) {
+      event.preventDefault();
+      document.getElementById(inputId).classList.add("is-invalid");
+      document.getElementById(inputId + "Validation").innerText =
+        "Só são aceitos números";
+      return;
+    }
+
+    if (input.classList.contains("is-invalid")) {
+      input.classList.remove("is-invalid");
+    }
+
+    if (event.key === "Backspace") {
+      event.preventDefault();
+      input.value = handleBackspace(input.value);
+      return;
+    }
+
+    const inputValue = event.target.value;
+    const cpf = inputValue.replace(/[^\d]/g, "") + event.key;
+
+    if (cpf.length >= 12) {
+      return;
+    }
+
+    if (cpf.length <= 6) {
+      input.value = cpf.replace(/(\d{3})(\d{1,3})/g, "$1.$2");
+      return;
+    } else if (cpf.length <= 9) {
+      input.value = cpf.replace(/(\d{3})(\d{3})(\d{1,3})/g, "$1.$2.$3");
+      return;
+    } else {
+      input.value = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/g, "$1.$2.$3-$4");
+      return;
+    }
+  }
+
+
+  function handleCellphoneMask(){
+    event.preventDefault();
+    event.stopPropagation();
+    const isValidKey = /([\d]|Backspace)/g.test(event.key);
+    const inputId = event.target.id;
+    const input = document.getElementById(inputId);
+
+    if (!isValidKey) {
+      event.preventDefault();
+      document.getElementById(inputId).classList.add("is-invalid");
+      document.getElementById(inputId + "Validation").innerText =
+        "Só são aceitos números";
+      return;
+    }
+
+    if (input.classList.contains("is-invalid")) {
+      input.classList.remove("is-invalid");
+    }
+
+    if (event.key === "Backspace") {
+      event.preventDefault();
+      input.value = handleBackspace(input.value);
+      return;
+    }
+
+    const cellphone = input.value.replace(/[^\d]/g, "") + event.key;
+
+    if (cellphone.length >= 12) {
+      return;
+    }
+
+    input.value = cellphone.replace(/(\d{2})(\d{1,5})(\d{1,4})/g, "($1) $2-$3");
+  }
+
+  function handleSubmit(){
+    'use strict';
+    debugger;
+    const form = event.target;
+    if(!form.checkValidity()){
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    form.classList.add('was-validated');
+  }
+</script>
+
 <div class="col-xs-12 col-sm-12 col-md pb-5 pb-md-0">
   <main>
     <div class="box">
-      <form action="/checkout/identify" class="needs-validation mb-0" method="post" novalidate>
+      <form
+        id="form-identify"
+        action="/checkout/identify"
+        class="mb-0"
+        method="post"
+        onsubmit="handleSubmit()"
+        novalidate
+      >
         <div class="row">
           <div class="col-12">
             <div class="row">
               <div class="col mb-3">
                 <label for="fullname" class="form-label">Nome Completo</label>
-                <input type="text"
-                {{#if fieldErrors.fullname}}
-                 class="form-control is-invalid"
-                {{else}}
+                <input
+                  type="text"
                   class="form-control"
-                {{/if}}
-                id="fullname" name="fullname" aria-describedby="fullnameValidation" />
-                {{#if fieldErrors.fullname}}
+                  id="fullname"
+                  name="fullname"
+                  aria-describedby="fullnameValidation"
+                />
                 <div id="fullnameValidation" class="invalid-feedback">
-                  {{result.fullname.msg}}
                 </div>
-                {{/if}}
               </div>
             </div>
             <div class="row">
               <div class="col mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email"
-                  {{#if fieldErrors.email}}
-                  class="form-control is-invalid"
-                  {{else}}
+                <input
+                  type="email"
                   class="form-control"
-                  {{/if}}
-                  id="email" name="email" 
-                  aria-describedby="emailValidation" />
+                  id="email"
+                  name="email"
+                  aria-describedby="emailValidation"
+                />
 
-                  {{#if fieldErrors.email}}
-                  <div id="emailValidation" class="invalid-feedback">
-                    {{result.email.msg}}
-                  </div>
-                  {{/if}}
+                <div id="emailValidation" class="invalid-feedback">
+                </div>
               </div>
             </div>
             <div class="row">
               <div class="col mb-3">
                 <label for="cpf" class="form-label">CPF</label>
-                <input type="text" 
-                  {{#if fieldErrors.cpf}}
-                  class="form-control is-invalid"
-                  {{else}} 
+                <input
+                  type="text"
                   class="form-control"
-                  {{/if}}
-                  id="cpf" name="cpf"
-                  aria-describedby="cpfValidation"/>
-
-                   {{#if fieldErrors.cpf}}
-                  <div id="cpfValidation" class="invalid-feedback">
-                    {{result.cpf.msg}}
-                  </div>
-                  {{/if}}
+                  id="cpf"
+                  name="cpf"
+                  onkeydown="handleCPFMask()"
+                  aria-describedby="cpfValidation"
+                />
+                <div id="cpfValidation" class="invalid-feedback">
+                </div>
               </div>
             </div>
             <div class="row">
               <div class="col mb-5">
                 <label for="cellphone" class="form-label">Celular com DDD</label>
-                <input type="text" 
-                  {{#if fieldErrors.cellphone}}
-                  class="form-control is-invalid"
-                  {{else}}
+                <input
+                  type="text"
                   class="form-control"
-                  {{/if}}
-                   id="cellphone" name="cellphone" 
-                   aria-describedby="cellphoneValidation"/>
+                  id="cellphone"
+                  name="cellphone"
+                  onkeydown="handleCellphoneMask()"
+                  aria-describedby="cellphoneValidation"
+                />
 
-                    {{#if fieldErrors.cellphone}}
-                  <div id="cellphoneValidation" class="invalid-feedback">
-                    {{result.cellphone.msg}}
-                  </div>
-                  {{/if}}
+                <div id="cellphoneValidation" class="invalid-feedback">
+                </div>
               </div>
             </div>
             <div class="row">

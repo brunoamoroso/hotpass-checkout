@@ -5,7 +5,6 @@
       const apiURL = `https://viacep.com.br/ws/88802202/json`;
       const zipCodeAPI = await fetch(apiURL);
       const addressObj = await zipCodeAPI.json();
-      console.log(addressObj);
 
       document.getElementById('city').value = addressObj.localidade;
       document.getElementById('uf').value = addressObj.uf;
