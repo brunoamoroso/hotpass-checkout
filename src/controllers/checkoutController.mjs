@@ -180,7 +180,7 @@ export default class CheckoutController {
       },
     };
 
-    //register the user if it doesn't exist
+    //start to prepare to register the user
     const ddd = cellphone.slice(0, 2);
     const phone = cellphone.slice(2, 11);
 
@@ -244,22 +244,24 @@ export default class CheckoutController {
       metadata: {},
     };
 
-    try {
-      const customerController = new CustomersController(client);
-      const { result, ...httpResponse } =
-        await customerController.createCustomer(customer);
+    // try {
+    //   const customerController = new CustomersController(client);
+    //   const { result, ...httpResponse } =
+    //     await customerController.createCustomer(customer);
 
-      if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
-        req.session.customer.id = result.id;
-        req.session.customer = customer;
-        res.render("checkout/payment", { item: req.session.item, stepper });
-      }
-    } catch (err) {
-      if (err instanceof ApiError) {
-        console.log(err);
-      }
-      throw new Error(err);
-    }
+    //   if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
+    //     req.session.customer.id = result.id;
+    //     req.session.customer = customer;
+    //     res.render("checkout/payment", { item: req.session.item, stepper });
+    //   }
+    // } catch (err) {
+    //   if (err instanceof ApiError) {
+    //     console.log(err);
+    //   }
+    //   throw new Error(err);
+    // }
+
+    res.render("checkout/payment", { item: req.session.item, stepper });
   }
 
   static async paymentPost(req, res) {
