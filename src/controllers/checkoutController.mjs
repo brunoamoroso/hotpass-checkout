@@ -157,10 +157,7 @@ export default class CheckoutController {
   }
 
   static async identifyPost(req, res) {
-    const errors = validationResult(req);
-    const result = validationResult(req).mapped();
     const { fullname, email, cpf, cellphone } = req.body;
-    let fieldErrors = {};
     const item = req.session.item;
     const userId = req.session.userId;
 
@@ -183,19 +180,7 @@ export default class CheckoutController {
       },
     };
 
-    // validated the fields and then render if necessary
-    if (!errors.isEmpty()) {
-      for (const error in result) {
-        if (result.hasOwnProperty(error)) {
-          fieldErrors[error] = true;
-        }
-      }
-      res.render("checkout/identify", { result, fieldErrors, item });
-      return;
-    }
-
     //register the user if it doesn't exist
-
     const ddd = cellphone.slice(0, 2);
     const phone = cellphone.slice(2, 11);
 
