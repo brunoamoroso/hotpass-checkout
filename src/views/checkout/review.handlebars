@@ -1,21 +1,27 @@
 <div class="col">
-  <div class="box">
-  <h3>Endereços</h3>
-  <div>
-        <label for={{customer.address.id}} >{{customer.address.zipCode}}<label>
-            <span>{{customer.address.street}}, {{customer.address.number}}</span>
-            <span>{{customer.address.neighborhood}} - {{customer.address.city}}</span>
-  </div>
-  </div>
-</div>
-<div class="col">
-  <div class="box">
-  <h3>Cartões</h3>
-  {{#each customerCards}}
-    <div class="form-check">
-        <label for={{this.id}} class="form-check-label">{{this.brand}}</label>
-        <span>{{this.lastFourDigits}} - {{this.expMonth}}/{{this.expYear}}</span>
+  <div class="row pb-4">
+    <div class="col">
+      <div class="box">
+        <h3>Endereços</h3>
+        <div>
+          <label for={{customer.address.id}} >{{customer.address.zipCode}}<label>
+          <span>{{customer.address.street}}, {{customer.address.number}}</span>
+          <span>{{customer.address.neighborhood}} - {{customer.address.city}}</span>
+        </div>
+      </div>
     </div>
-  {{/each}}
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="box">
+        <h3>Cartões</h3>
+        {{#each customerCards}}
+          <div>
+              <label for={{this.id}} >{{this.brand}}</label>
+              <span>{{this.lastFourDigits}} - {{this.expMonth}}/{{this.expYear}}</span>
+          </div>
+        {{/each}}
+      </div>
+    </div>
   </div>
 </div>

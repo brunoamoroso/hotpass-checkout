@@ -244,24 +244,22 @@ export default class CheckoutController {
       metadata: {},
     };
 
-    // try {
-    //   const customerController = new CustomersController(client);
-    //   const { result, ...httpResponse } =
-    //     await customerController.createCustomer(customer);
+    try {
+      const customerController = new CustomersController(client);
+      const { result, ...httpResponse } =
+        await customerController.createCustomer(customer);
 
-    //   if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
-    //     req.session.customer.id = result.id;
-    //     req.session.customer = customer;
-    //     res.render("checkout/payment", { item: req.session.item, stepper });
-    //   }
-    // } catch (err) {
-    //   if (err instanceof ApiError) {
-    //     console.log(err);
-    //   }
-    //   throw new Error(err);
-    // }
-
-    res.render("checkout/payment", { item: req.session.item, stepper });
+      if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
+        req.session.customer.id = result.id;
+        req.session.customer = customer;
+        res.render("checkout/payment", { item: req.session.item, stepper });
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        console.log(err);
+      }
+      throw new Error(err);
+    }
   }
 
   static async paymentPost(req, res) {
