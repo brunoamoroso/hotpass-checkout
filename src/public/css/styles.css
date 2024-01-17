@@ -70,3 +70,23 @@ nav {
     color: #FFF;
     background-color: #0d6efd;
 }
+
+.order-item-name{
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+
+.order-item-price{
+  font-size: 0.875rem;
+}
+
+.order-total-title{
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.order-total-price{
+  font-weight: bold;
+}
+

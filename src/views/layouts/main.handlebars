@@ -76,20 +76,22 @@
                     <aside>
                       <h3>Pedido</h3>
                       <div>
-                        <div class="order-item">
+                        <div class="order-item d-flex justify-content-between">
                           <span class="order-item-name">{{item.name}}</span>
                           <span class="order-item-price">{{item.price}}</span>
                         </div>
                         <hr />
-                        <div class="order-total">
+                        <div class="order-total d-flex justify-content-between">
                           <span class="order-total-title">Total</span>
                           <span class="order-total-price">{{item.price}}</span>
                         </div>
                       </div>
 
                       {{#if customerExists}}
-                        <form action="/checkout/confirmPayment" method="POST">
-                          <button class="btn btn-primary">Confirmar Compra</button>
+                        <form action="/checkout/confirmPayment" method="POST" class="mb-0">
+                          <div class="d-grid pt-5">
+                            <button class="btn btn-primary">Confirmar Compra</button>
+                          </div>
                         </form>
                       {{/if}}
                     </aside>
