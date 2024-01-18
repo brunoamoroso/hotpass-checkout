@@ -83,16 +83,57 @@
   }
 
   function handleSubmit(){
-    'use strict';
-    debugger;
-    const form = event.target;
-    if(!form.checkValidity()){
+    const fullnameInput = document.getElementById('fullname');
+    const emailInput = document.getElementById('email');
+    const cpfInput = document.getElementById('cpf');
+    const cellphoneInput = document.getElementById('cellphone');
+    let fieldsNotEmpty = true;
+
+    const emailIsValid = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/g.test(emailInput.value);
+
+    if(fullnameInput.value === ""){
+      fullnameInput.classList.add('is-invalid');
+      document.getElementById('fullnameValidation').innerText = 'Esse campo é obrigatório';
+      fieldsNotEmpty = false;
+    }else{
+      if(fullnameInput.classList.contains('is-invalid')){
+        fullnameInput.classList.remove('is-invalid');
+        document.getElementById('fullnameValidation').innerText = "";
+      }
+    }
+
+    if(emailInput.value === ""){
+      emailInput.classList.add('is-invalid');
+      document.getElementById('emailValidation').innerText = 'Esse campo é obrigatório';
+      fieldsNotEmpty = false;
+    }
+
+    if(cpfInput.value === ""){
+      cpfInput.classList.add('is-invalid');
+      document.getElementById('cpfValidation').innerText = 'Esse campo é obrigatório';
+      fieldsNotEmpty = false;
+    }
+
+    if(cellphoneInput.value === ""){
+      cellphoneInput.classList.add('is-invalid');
+      document.getElementById('cellphoneValidation').innerText = 'Esse campo é obrigatório';
+      fieldsNotEmpty = false;
+    }
+
+    if(!fieldsNotEmpty){
       event.preventDefault();
       event.stopPropagation();
       return;
     }
 
-    form.classList.add('was-validated');
+
+
+    if(!emailIsValid){
+      emailInput.classList.add('is-invalid');
+      document.getElementById('emailValidation').innerText = 'O email que você preencheu não é válido';
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 </script>
 
@@ -100,7 +141,6 @@
   <main>
     <div class="box">
       <form
-        id="form-identify"
         action="/checkout/identify"
         class="mb-0"
         method="post"
