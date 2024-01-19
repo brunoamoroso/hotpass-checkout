@@ -1,10 +1,61 @@
 <script type="text/javascript">
+  function handleZipcodeMask(){
+    const isValidKey = /([\d]|Backspace|Tab)/g.test(event.key);
+    const zipCodeInput = event.target;
+
+    if(!isValidKey){
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById(zipCodeInput.id).classList.add('is-invalid');
+      document.getElementById('zipcodeValidation').innerText = 'Só são aceitos números';
+      return;
+    }
+
+    if (event.key === "Backspace") {
+      input.value = handleBackspace(input.value);
+      return;
+    }
+
+    if(event.key === "Tab"){
+      return;
+    }
+
+    if(zipCodeInput.value.length >= 9){
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const inputValue = event.target.value;
+    const key = event.key;
+    const zipcode = inputValue.replace("-", "") + key;
+    zipCodeInput.value = zipcode.replace(/(\d{5})(\d{1,3})/g, "$1-$2");
+  }
+
   async function handleZipcodeBlur(){
-    const zipCodeValue = event.target.value;
+    const zipCodeValue = event.target.value.replace("-", "");
+
+    if(zipCodeValue === ""){
+      return;
+    }
+     
     try{
-      const apiURL = `https://viacep.com.br/ws/88802202/json`;
+      const apiURL = `https://viacep.com.br/ws/${zipCodeValue}/json`;
       const zipCodeAPI = await fetch(apiURL);
       const addressObj = await zipCodeAPI.json();
+
+      if(addressObj.erro){
+        document.getElementById('zipcode').classList.add('is-invalid');
+        document.getElementById('zipcodeValidation').innerText = 'O CEP que você digitou é inválido';
+        return;
+      }
+
+      if(document.getElementById('zipcode').classList.contains('is-invalid')){
+        document.getElementById('zipcode').classList.remove('is-invalid');
+        document.getElementById('zipcodeValidation').innerText = '';
+      }
 
       document.getElementById('city').value = addressObj.localidade;
       document.getElementById('uf').value = addressObj.uf;
@@ -14,12 +65,49 @@
       console.log(err)
     }
   }
+
+  function handleNumberValidation(){
+    const isValidKey = /([\d]|Backspace|Tab)/g.test(event.key);
+    const input = event.target;
+
+    if(!isValidKey){
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById(input.id).classList.add('is-invalid');
+      return;
+    }
+
+    if(document.getElementById(input.id).classList.contains('is-invalid')){
+      document.getElementById(input.id).classList.remove('is-invalid');
+    }
+
+    if (event.key === "Backspace") {
+      input.value = handleBackspace(input.value);
+      return;
+    }
+
+    if(event.key === "Tab"){
+      return;
+    }
+  }
+
+  function handleSubmit(){
+    const zipcodeInput = document.getElementById('zipcode');
+
+    if(zipcodeInput.value === ""){
+      zipcodeInput.classList.add('is-invalid');
+      document.getElementById('zipcodeValidation').innerText = 'É obrigatório preencher o CEP';
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+  }
 </script>
 
 <div class="col-xs-12 col-md pb-5">
   <main>
     <div class="box">
-      <form action="/checkout/address" method="post">
+      <form action="/checkout/address" method="post" onsubmit="handleSubmit()">
         <div class="row">
           <div class="col-12">
             <div class="row">
@@ -31,7 +119,10 @@
                   id="zipcode"
                   name="zipcode"
                   onblur="handleZipcodeBlur()"
+                  onkeydown="handleZipcodeMask()"
                 />
+                <div id="zipcodeValidation" class="invalid-feedback">
+                </div>
               </div>
             </div>
             <div class="row">
@@ -43,6 +134,7 @@
                   aria-label="Input de Rua apenas leitura"
                   id="city"
                   name="city"
+                  readonly
                 />
               </div>
                <div class="col-3 mb-3">
@@ -53,6 +145,7 @@
                   aria-label="Input de Rua apenas leitura"
                   id="uf"
                   name="uf"
+                  readonly
                 />
               </div>
             </div>
@@ -80,8 +173,11 @@
                   class="form-control"
                   id="number"
                   name="number"
+                  onkeydown="handleNumberValidation()"
                 />
               </div>
+              <div id="numberValidation" class="invalid-feedback">
+                </div>
             </div>
             <div class="row">
               <div class="col mb-5">

@@ -181,14 +181,14 @@ export default class CheckoutController {
     };
 
     //start to prepare to register the user
-    const ddd = cellphone.slice(0, 2);
-    const phone = cellphone.slice(2, 11);
+    const ddd = cellphone.slice(1, 3);
+    const phone = cellphone.slice(5, 15).replace("-", "");
 
     const bodyCustomer = {
       code: userId,
       name: fullname,
       email: email,
-      document: cpf,
+      document: cpf.replaceAll(".", "").replace("-", ""),
       documentType: "CPF",
       type: "individual",
       phones: {
@@ -201,6 +201,8 @@ export default class CheckoutController {
       address: {},
       metadata: {},
     };
+
+    console.log(bodyCustomer);
 
     req.session.customer = bodyCustomer;
 
@@ -230,14 +232,15 @@ export default class CheckoutController {
     const { zipcode, city, uf, neighborhood, street, number, complement } =
       req.body;
     let customer = req.session.customer;
+    
     customer.address = {
       line1: street.concat(", ", neighborhood, ", ", number),
       line2: complement,
       street: street,
-      number: number,
+      number: (number === '') ? 'S/N' : number,
       neighborhood: neighborhood,
       complement: complement,
-      zipCode: zipcode,
+      zipCode: zipcode.replace("-", ""),
       city: city,
       state: uf,
       country: "BR",
