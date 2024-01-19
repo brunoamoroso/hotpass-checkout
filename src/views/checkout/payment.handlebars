@@ -1,48 +1,115 @@
+<script>
+  function handleCardNumberMask(){ 
+    const input = event.target;
+    const isValidKey = /([\d]|Backspace|Tab|Enter)/g.test(event.key);
+    const inputValue = event.target.value.replace(/ /g, "");
+      
+    if(!isValidKey){
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById(input.id).classList.add('is-invalid');
+      document.getElementById('cardNumberValidation').innerText = 'Só são aceitos números'; 
+      return; 
+    }
+
+    if(event.key === "Backspace"){
+      return;
+    }
+
+    if(event.key === "Tab"){
+      return;
+    }
+
+    if(event.key === "Enter"){
+      return;
+    }
+
+    if(inputValue.length >= 16){
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const key = event.key;
+    const cardNumber = inputValue + key;
+    input.value = cardNumber.replace(/(\d{4})(\d{0,4})(\d{0,4})(\d{0,4})/g, "$1 $2 $3 $4");
+  }
+</script>
+
 <div class="col-xs-12 col-md pb-5 pb-md-0">
   <main>
     <div class="box">
-      <form action="/checkout/payment" class="needs-validation" method="post" novalidate>
+      <form
+        action="/checkout/payment"
+        class="needs-validation"
+        method="post"
+        novalidate
+      >
         <div class="row">
           <div class="col-12">
             <div class="row">
               <div class="col mb-3">
                 <select name="" id="" class="form-select" disabled>
-                  <label for="installments" class="form-label">Quantidade de parcelas</label>
-                  <option name="installments" value="">1x de {{item.price}}</option>
+                  <label for="installments" class="form-label">Quantidade de
+                    parcelas</label>
+                  <option name="installments" value="">1x de
+                    {{item.price}}</option>
                 </select>
               </div>
             </div>
             <div class="row">
               <div class="col mb-3">
                 <label for="number" class="form-label">Número do Cartão</label>
-                <input type="text"
+                <input
+                  type="text"
                   class="form-control"
-                id="number" name="number" aria-describedby="fullnameValidation" placeholder="0000 0000 0000 0000"/>
+                  onkeydown="handleCardNumberMask()"
+                  id="number"
+                  name="number"
+                  aria-describedby="cardNumberValidation"
+                  placeholder="0000 0000 0000 0000"
+                />
+                <div id="cardNumberValidation" class="invalid-feedback"></div>
               </div>
             </div>
             <div class="row">
               <div class="col mb-3">
-                <label for="holder_name" class="form-label">Nome como está no cartão</label>
-                <input type="holder_name"
+                <label for="holder_name" class="form-label">Nome como está no
+                  cartão</label>
+                <input
+                  type="holder_name"
                   class="form-control"
-                  id="holder_name" name="holder_name" 
-                  aria-describedby="emailValidation" placeholder="NOME COMO ESTÁ NO CARTÃO"/>
+                  id="holder_name"
+                  name="holder_name"
+                  aria-describedby="emailValidation"
+                  placeholder="NOME COMO ESTÁ NO CARTÃO"
+                />
               </div>
             </div>
             <div class="row">
               <div class="col mb-3">
                 <label for="due" class="form-label">Validade</label>
-                <input type="text" 
+                <input
+                  type="text"
                   class="form-control"
-                  id="due" name="due"
-                  aria-describedby="cpfValidation" placeholder="MM/AA"/>
+                  id="due"
+                  name="due"
+                  aria-describedby="cpfValidation"
+                  placeholder="MM/AA"
+                />
               </div>
               <div class="col mb-3">
                 <label for="cvv" class="form-label">CVC</label>
-                <input type="text" 
+                <input
+                  type="text"
                   class="form-control"
-                  id="cvv" name="cvv"
-                  aria-describedby="cpfValidation" placeholder="000"/>
+                  id="cvv"
+                  name="cvv"
+                  aria-describedby="cpfValidation"
+                  placeholder="000"
+                />
               </div>
             </div>
             <div class="row">

@@ -229,40 +229,41 @@ export default class CheckoutController {
       },
     };
 
-    const { zipcode, city, uf, neighborhood, street, number, complement } =
-      req.body;
-    let customer = req.session.customer;
+    // const { zipcode, city, uf, neighborhood, street, number, complement } =
+    //   req.body;
+    // let customer = req.session.customer;
     
-    customer.address = {
-      line1: street.concat(", ", neighborhood, ", ", number),
-      line2: complement,
-      street: street,
-      number: (number === '') ? 'S/N' : number,
-      neighborhood: neighborhood,
-      complement: complement,
-      zipCode: zipcode.replace("-", ""),
-      city: city,
-      state: uf,
-      country: "BR",
-      metadata: {},
-    };
+    // customer.address = {
+    //   line1: street.concat(", ", neighborhood, ", ", number),
+    //   line2: complement,
+    //   street: street,
+    //   number: (number === '') ? 'S/N' : number,
+    //   neighborhood: neighborhood,
+    //   complement: complement,
+    //   zipCode: zipcode.replace("-", ""),
+    //   city: city,
+    //   state: uf,
+    //   country: "BR",
+    //   metadata: {},
+    // };
 
-    try {
-      const customerController = new CustomersController(client);
-      const { result, ...httpResponse } =
-        await customerController.createCustomer(customer);
+    // try {
+    //   const customerController = new CustomersController(client);
+    //   const { result, ...httpResponse } =
+    //     await customerController.createCustomer(customer);
 
-      if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
-        req.session.customer.id = result.id;
-        req.session.customer = customer;
-        res.render("checkout/payment", { item: req.session.item, stepper });
-      }
-    } catch (err) {
-      if (err instanceof ApiError) {
-        console.log(err);
-      }
-      throw new Error(err);
-    }
+    //   if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
+    //     req.session.customer.id = result.id;
+    //     req.session.customer = customer;
+    //     res.render("checkout/payment", { item: req.session.item, stepper });
+    //   }
+    // } catch (err) {
+    //   if (err instanceof ApiError) {
+    //     console.log(err);
+    //   }
+    //   throw new Error(err);
+    // }
+    res.render("checkout/payment", { item: req.session.item, stepper });
   }
 
   static async paymentPost(req, res) {
