@@ -1,8 +1,4 @@
 <script>
-  function handleBackspace(value){
-    return value = value.slice(0, -1);
-  }
-
   function handleCPFMask() {
     const isValidKey = /([\d]|Backspace|Tab|Enter)/g.test(event.key);
     const inputId = event.target.id;
@@ -22,7 +18,6 @@
     }
 
     if (event.key === "Backspace") {
-      input.value = handleBackspace(input.value);
       return;
     }
 
@@ -57,17 +52,15 @@
 
 
   function handleCellphoneMask(){
-    event.preventDefault();
-    event.stopPropagation();
-    const isValidKey = /([\d]|Backspace)/g.test(event.key);
+    const isValidKey = /([\d]|Backspace|Enter)/g.test(event.key);
     const inputId = event.target.id;
     const input = document.getElementById(inputId);
 
     if (!isValidKey) {
       event.preventDefault();
+      event.stopPropagation();
       document.getElementById(inputId).classList.add("is-invalid");
-      document.getElementById(inputId + "Validation").innerText =
-        "Só são aceitos números";
+      document.getElementById(inputId + "Validation").innerText = "Só são aceitos números";
       return;
     }
 
@@ -76,11 +69,19 @@
     }
 
     if (event.key === "Backspace") {
-      event.preventDefault();
-      input.value = handleBackspace(input.value);
       return;
     }
 
+    if(event.key === "Tab"){
+      return;
+    }
+
+    if(event.key === "Enter"){
+      return;
+    }
+    
+    event.preventDefault();
+    event.stopPropagation();
     const cellphone = input.value.replace(/[^\d]/g, "") + event.key;
 
     if (cellphone.length >= 12) {
