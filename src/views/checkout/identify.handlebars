@@ -11,7 +11,6 @@
     const input = document.getElementById(inputId);
 
     if (!isValidKey) {
-      event.preventDefault();
       document.getElementById(inputId).classList.add("is-invalid");
       document.getElementById(inputId + "Validation").innerText =
         "Só são aceitos números";
@@ -23,7 +22,6 @@
     }
 
     if (event.key === "Backspace") {
-      event.preventDefault();
       input.value = handleBackspace(input.value);
       return;
     }
