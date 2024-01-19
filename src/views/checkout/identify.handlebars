@@ -4,13 +4,13 @@
   }
 
   function handleCPFMask() {
-    event.preventDefault();
-    event.stopPropagation();
-    const isValidKey = /([\d]|Backspace)/g.test(event.key);
+    const isValidKey = /([\d]|Backspace|Tab|Enter)/g.test(event.key);
     const inputId = event.target.id;
     const input = document.getElementById(inputId);
 
     if (!isValidKey) {
+      event.preventDefault();
+      event.stopPropagation();
       document.getElementById(inputId).classList.add("is-invalid");
       document.getElementById(inputId + "Validation").innerText =
         "Só são aceitos números";
@@ -26,6 +26,16 @@
       return;
     }
 
+    if(event.key === "Tab"){
+      return;
+    }
+
+    if(event.key === "Enter"){
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
     const inputValue = event.target.value;
     const cpf = inputValue.replace(/[^\d]/g, "") + event.key;
 
