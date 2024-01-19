@@ -36,6 +36,11 @@
 
   async function handleZipcodeBlur(){
     const zipCodeValue = event.target.value.replace("-", "");
+
+    if(zipCodeValue === ""){
+      return;
+    }
+     
     try{
       const apiURL = `https://viacep.com.br/ws/${zipCodeValue}/json`;
       const zipCodeAPI = await fetch(apiURL);
@@ -85,12 +90,24 @@
       return;
     }
   }
+
+  function handleSubmit(){
+    const zipcodeInput = document.getElementById('zipcode');
+
+    if(zipcodeInput.value === ""){
+      zipcodeInput.classList.add('is-invalid');
+      document.getElementById('zipcodeValidation').innerText = 'É obrigatório preencher o CEP';
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+  }
 </script>
 
 <div class="col-xs-12 col-md pb-5">
   <main>
     <div class="box">
-      <form action="/checkout/address" method="post">
+      <form action="/checkout/address" method="post" onsubmit="handleSubmit()">
         <div class="row">
           <div class="col-12">
             <div class="row">
