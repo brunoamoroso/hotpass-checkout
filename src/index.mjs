@@ -8,14 +8,18 @@ import FileStoreFactory from "session-file-store";
 
 const FileStore = FileStoreFactory(session);
 
-const app = express();
-
-app.engine("handlebars", exphbs.engine());
-app.set("view engine", "handlebars");
-
 //get dirname
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
+
+const app = express();
+const hbs = exphbs.create({
+  partialsDir: path.join(__dirname, 'views/partials'),
+})
+
+app.engine("handlebars", hbs.engine);
+app.set("view engine", "handlebars");
+
 
 //update views directory
 app.set("views", path.join(__dirname, "views"));
@@ -48,6 +52,10 @@ app.use(session({
 }));
 
 //Routes
+app.use(function (req, res){
+  res.status(404);
+  res.render('404', {layout: false});
+});
 app.use("/checkout", checkoutRoutes);
 
 app.listen(3000, () => {
