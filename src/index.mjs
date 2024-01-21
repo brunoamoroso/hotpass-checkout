@@ -52,11 +52,12 @@ app.use(session({
 }));
 
 //Routes
+app.use("/checkout", checkoutRoutes);
+
 app.use(function (req, res){
   res.status(404);
   res.render('404', {layout: false});
 });
-app.use("/checkout", checkoutRoutes);
 
 app.listen(3000, () => {
   console.log("Server running on 3000");
