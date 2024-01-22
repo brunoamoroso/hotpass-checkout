@@ -2,7 +2,7 @@ import { Schema } from "mongoose";
 
 const botConfigSchema = new Schema(
   {
-    channel_id: {
+    vip_chat_id: {
       type: String,
     },
     split_rules: {
