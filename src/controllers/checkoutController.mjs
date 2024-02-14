@@ -202,8 +202,6 @@ export default class CheckoutController {
       metadata: {},
     };
 
-    console.log(bodyCustomer);
-
     req.session.customer = bodyCustomer;
 
     res.render("checkout/address", { item, stepper });
@@ -229,41 +227,40 @@ export default class CheckoutController {
       },
     };
 
-    // const { zipcode, city, uf, neighborhood, street, number, complement } =
-    //   req.body;
-    // let customer = req.session.customer;
+    const { zipcode, city, uf, neighborhood, street, number, complement } =
+      req.body;
+    let customer = req.session.customer;
     
-    // customer.address = {
-    //   line1: street.concat(", ", neighborhood, ", ", number),
-    //   line2: complement,
-    //   street: street,
-    //   number: (number === '') ? 'S/N' : number,
-    //   neighborhood: neighborhood,
-    //   complement: complement,
-    //   zipCode: zipcode.replace("-", ""),
-    //   city: city,
-    //   state: uf,
-    //   country: "BR",
-    //   metadata: {},
-    // };
+    customer.address = {
+      line1: street.concat(", ", neighborhood, ", ", number),
+      line2: complement,
+      street: street,
+      number: (number === '') ? 'S/N' : number,
+      neighborhood: neighborhood,
+      complement: complement,
+      zipCode: zipcode.replace("-", ""),
+      city: city,
+      state: uf,
+      country: "BR",
+      metadata: {},
+    };
 
-    // try {
-    //   const customerController = new CustomersController(client);
-    //   const { result, ...httpResponse } =
-    //     await customerController.createCustomer(customer);
+    try {
+      const customerController = new CustomersController(client);
+      const { result, ...httpResponse } =
+        await customerController.createCustomer(customer);
 
-    //   if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
-    //     req.session.customer.id = result.id;
-    //     req.session.customer = customer;
-    //     res.render("checkout/payment", { item: req.session.item, stepper });
-    //   }
-    // } catch (err) {
-    //   if (err instanceof ApiError) {
-    //     console.log(err);
-    //   }
-    //   throw new Error(err);
-    // }
-    res.render("checkout/payment", { item: req.session.item, stepper });
+      if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
+        req.session.customer.id = result.id;
+        req.session.customer = customer;
+        res.render("checkout/payment", { item: req.session.item, stepper });
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        console.log(err);
+      }
+      throw new Error(err);
+    }
   }
 
   static async paymentPost(req, res) {
@@ -286,6 +283,19 @@ export default class CheckoutController {
       },
     };
 
+    if(req.session.customer.document === undefined){
+      try{
+        const customerController = new CustomersController(client);
+        const { result, ...httpResponse } = await customerController.getCustomer(
+          req.session.customer.id,
+        );
+  
+        req.session.customer = result;
+      }catch(err){
+        throw Error(err);
+      }
+    }
+
     const { number, holder_name, due, cvv } = req.body;
     const exp_month = parseInt(due.slice(0, 2));
     const exp_year = parseInt(due.slice(3, 5));
@@ -293,50 +303,50 @@ export default class CheckoutController {
     try {
       const bodyCreateCard = {
         number: number,
-        holder_name: holder_name,
-        holder_document: req.session.customer.document,
-        exp_month: exp_month,
-        exp_year: exp_year,
+        holderName: holder_name,
+        holderDocument: req.session.customer.document,
+        expMonth: exp_month,
+        expYear: exp_year,
         cvv: cvv,
-        billing_address_id: req.session.customer.address.id,
+        billingAddressId: req.session.customer.address.id,
       };
 
       const user = process.env.PGMSK;
       const password = "";
 
-      const responseCreateCard = await fetch(
-        `https://api.pagar.me/core/v5/customers/${req.session.customer.id}/cards`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
-          },
-          body: JSON.stringify(bodyCreateCard),
-        }
-      );
+      const customerController = new CustomersController(client);
+      const {result, ...httpResponse} = await customerController.createCard(req.session.customer.id, bodyCreateCard);
+        
+      let customerCards;
+      try{
+        const customerController = new CustomersController(client);
+        const { result, ...httpResponse } = await customerController.getCards(
+          req.session.customer.id
+        );
 
-      const dataCard = await responseCreateCard.json();
-      req.session.customerCards = dataCard;
+        customerCards = result.data;
+      }catch(err){
+        console.log(err);
+      }
 
       const customerExists = true;
 
       res.render("checkout/review", {
         item: req.session.item,
         customer: req.session.customer,
-        customerCards: dataCard,
+        customerCards: customerCards,
         customerExists,
         stepper
       });
     } catch (err) {
-      if (err instanceof ApiError) {
-        console.log(err);
-      }
-      throw new Error(err);
+      console.log(err);
+      res.render('checkout/payment', { item: req.session.item, customer: req.session.customer, stepper, error: "Ocorreu um problema ao tentar criar o seu cartão de crédito. Verifique os dados e tente novamente."});
+      return;
     }
   }
 
   static async confirmPayment(req, res) {
+
     const user = process.env.PGMSK;
     const password = "";
 
@@ -440,5 +450,29 @@ export default class CheckoutController {
         console.log(err);
       }
     }
+  }
+
+  static async newCard(req, res){
+    
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "active",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step4: {
+        status: "",
+        label: "4",
+      },
+    };
+    req.session.customer = {id: req.params.id}
+    res.render('checkout/payment', {item: req.session.item, stepper});
   }
 }
