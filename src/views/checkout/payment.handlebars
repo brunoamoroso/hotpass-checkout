@@ -81,7 +81,6 @@
   }
 
   function handleSubmit(){
-    debugger;
     //getting error while reading cardnumber or holdername most probably holdername
     const cardNumberInput = document.getElementById('number');
     const holderNameInput = document.getElementById('holder_name');
@@ -148,12 +147,15 @@
       return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
-    return;
   }
 </script>
-
+{{#if error}}
+<div class="col-12">
+              <div class="alert alert-danger">
+                {{error}}
+              </div>
+            </div>
+{{/if}}
 <div class="col-xs-12 col-md pb-5 pb-md-0">
   <main>
     <div class="box">

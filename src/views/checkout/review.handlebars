@@ -14,9 +14,13 @@
   <div class="row">
     <div class="col">
       <div class="box">
-        <h3>Cartões</h3>
+        <div class="d-flex justify-content-between align-items-center">
+          <h3>Cartões</h3>
+          <a href="/checkout/newCard/{{customer.id}}"><button class="btn btn-outline-primary btn-sm">Adicionar Cartão</button></a>
+        </div>
         {{#each customerCards}}
-          <div>
+          <div class="form-check">
+            <input type="radio" class="form-check-input" name="cardsRadio">
               <label for={{this.id}} >{{this.brand}}</label>
               <span>{{this.lastFourDigits}} - {{this.expMonth}}/{{this.expYear}}</span>
           </div>

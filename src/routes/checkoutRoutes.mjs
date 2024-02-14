@@ -11,5 +11,6 @@ router.post('/identify', identifyValidateDate, CheckoutController.identifyPost);
 router.post('/address', CheckoutController.addressPost);
 router.post('/payment', CheckoutController.paymentPost);
 router.post('/confirmPayment', CheckoutController.confirmPayment);
+router.get('/newCard/:id', CheckoutController.newCard);
 
 export default router;
