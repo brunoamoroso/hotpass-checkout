@@ -154,7 +154,8 @@ export default class CheckoutController {
         customer: req.session.customer,
         customerCards: req.session.customerCards,
         customerExists,
-        stepper
+        stepper,
+        dynamicURL: process.env.CHECKOUT_DOMAIN
       });
       return;
     }
@@ -343,7 +344,8 @@ export default class CheckoutController {
         customer: req.session.customer,
         customerCards: customerCards,
         customerExists,
-        stepper
+        stepper,
+        dynamicURL: process.env.CHECKOUT_DOMAIN
       });
     } catch (err) {
       console.log(err);
@@ -353,7 +355,7 @@ export default class CheckoutController {
   }
 
   static async confirmPayment(req, res) {
-
+    const {cardId} = req.body;
     const user = process.env.PGMSK;
     const password = "";
 
@@ -371,7 +373,7 @@ export default class CheckoutController {
           plan_id: req.session.item.id,
           customer_id: req.session.customer.id,
           payment_method: "credit_card",
-          card_id: req.session.customerCards[0].id,
+          card_id: cardId,
           installments: 1,
           split: {
             enabled: true,
@@ -422,7 +424,7 @@ export default class CheckoutController {
             {
               payment_method: "credit_card",
               credit_card: {
-                card_id: req.session.customerCards[0].id,
+                card_id: cardId
               },
               amount: req.session.item.amount,
               split: BotConfigs.split_rules,
@@ -449,12 +451,26 @@ export default class CheckoutController {
               bot_name: req.session.botName,
             };
             axios.post(webhookURL, data);
+            res.render("checkout/success", {
+              item: req.session.item,
+              customer: req.session.customer
+            });
           }
 
           return resp.json();
         });
       } catch (err) {
         console.log(err);
+        res.render("checkout/review", {
+          item: req.session.item,
+          customer: req.session.customer,
+          customerCards: req.session.customerCards,
+          customerExists: true,
+          stepper,
+          dynamicURL: process.env.CHECKOUT_DOMAIN,
+          alertMessage: {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
+        });
+        return res.status(500).send("Tivemos um problema");
       }
     }
   }
@@ -518,6 +534,7 @@ export default class CheckoutController {
         customerCards: result.data,
         customerExists: true,
         stepper,
+        dynamicURL: process.env.CHECKOUT_DOMAIN,
         alertMessage: {type: "success", message: "Você excluiu seu cartão com sucesso!"}
       });
       
@@ -529,8 +546,13 @@ export default class CheckoutController {
         customerCards: result.data,
         customerExists: true,
         stepper,
+        dynamicURL: process.env.CHECKOUT_DOMAIN,
         alertMessage: {type: "danger", message: "Tivemos um problema ao excluir o seu cartão. Tente novamente mais tarde"}
       });
     }
+  }
+
+  static success (req, res){
+    return res.render('checkout/success', {layout: false});
   }
 }

@@ -2,7 +2,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Checkout - Identificação</title>
+    <title>Fluxo de Pagamento</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -20,6 +20,34 @@
     />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
+  <script>
+    async function handleReviewSubmit(){
+      const spinner = document.getElementById('payment-spinner');
+      const paymentText = document.getElementById('payment-text');
+      
+      paymentText.innerText = 'Efetuando Compra...';
+      spinner.style.display = 'inline-flex';
+
+      const card = document.querySelector('input[name="cardsRadio"]:checked').value;
+
+      const requestBody = JSON.stringify({cardId: card});
+
+      await fetch('{{dynamicURL}}/checkout/confirmPayment', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "cors",
+        body: requestBody
+      }).then(response => {
+        if(response.status === 200){
+          window.location.href = '{{dynamicURL}}/checkout/success';
+        }
+      }).catch(err => {
+        console.log(err)
+      });
+    }
+  </script>
   <body>
     {{> navbar}}
 
@@ -86,11 +114,15 @@
                       </div>
 
                       {{#if customerExists}}
-                        <form action="/checkout/confirmPayment" method="POST" class="mb-0">
                           <div class="d-grid pt-5">
-                            <button class="btn btn-primary">Confirmar Compra</button>
+                            <button class="btn btn-primary" onclick="handleReviewSubmit()">
+                              <div id="payment-spinner" style="width: 1rem; height: 1rem; border-width: 0.18rem; display: none;" class="spinner-border me-2" role="status">
+                              </div>
+                              <span id="payment-text">
+                                Confirmar Compra
+                              </span>
+                            </button>
                           </div>
-                        </form>
                       {{/if}}
                     </aside>
                   </div>
