@@ -1,5 +1,13 @@
+
+{{#if alertMessage}}
+<div class="col-12">
+  <div class="alert alert-{{alertMessage.type}}">
+    {{alertMessage.message}}
+  </div>
+</div>
+{{/if}}
 <div class="col pb-5">
-  <div class="row pb-4">
+  {{!-- <div class="row pb-4">
     <div class="col">
       <div class="box">
         <h3>Endereços</h3>
@@ -10,21 +18,48 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> --}}
   <div class="row">
     <div class="col">
       <div class="box">
         <div class="d-flex justify-content-between align-items-center">
           <h3>Cartões</h3>
-          <a href="/checkout/newCard/{{customer.id}}"><button class="btn btn-outline-primary btn-sm">Adicionar Cartão</button></a>
+          <a href="/checkout/newCard/{{customer.id}}"><button
+              class="btn btn-outline-primary btn-sm"
+            >Adicionar Cartão</button></a>
         </div>
-        {{#each customerCards}}
-          <div class="form-check">
-            <input type="radio" class="form-check-input" name="cardsRadio">
-              <label for={{this.id}} >{{this.brand}}</label>
-              <span>{{this.lastFourDigits}} - {{this.expMonth}}/{{this.expYear}}</span>
-          </div>
-        {{/each}}
+
+        <div class="cards_list">
+          {{#each customerCards}}
+            <div class="form-check">
+              <div class="row">
+                <div class="col d-flex align-items-center">
+                  <input
+                    type="radio"
+                    class="form-check-input"
+                    name="cardsRadio"
+                  />
+                  <div class="row">
+                    <div class="col d-flex flex-column">
+                      <label for={{this.id}}>{{this.brand}}</label>
+                      <span>{{this.lastFourDigits}}
+                        {{this.expMonth}}/{{this.expYear}}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col d-flex justify-content-end align-items-center">
+                  <a href="/checkout/deleteCard/{{this.customerId}}/{{this.id}}">
+                    <button class="btn btn-link btn-sm">
+                      <i class="bi bi-trash-fill"></i>
+                      Excluir
+                    </button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+
+        </div>
       </div>
     </div>
   </div>

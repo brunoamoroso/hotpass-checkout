@@ -90,3 +90,39 @@ nav {
   font-weight: bold;
 }
 
+.cardsRadio{
+  padding: 16px;
+  border-bottom: 1px 
+}
+
+.cards_list{
+  padding: 16px 8px;
+}
+
+.cards_list .form-check{
+  padding: 16px;
+  /* border-bottom: 1px solid #c8cbcd; */
+  background-color: #ececec;
+  border-radius: 16px;
+  margin-bottom: 8px
+}
+
+.cards_list .form-check:last-child{
+  border-bottom: none;
+  margin-bottom: 0px;
+}
+
+.cards_list .form-check-input{
+  margin-left: 0px !important;
+  margin-right: 16px;
+}
+
+.cards_list .form-check:hover{
+  background-color: #d8d8d8;
+}
+
+.form-check:has(input[type="radio"]:checked){
+  border: 2px solid rgb(13, 110, 253);
+  background-color: rgb(200, 217, 244);
+}
+

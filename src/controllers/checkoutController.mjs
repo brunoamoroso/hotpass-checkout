@@ -142,6 +142,12 @@ export default class CheckoutController {
       }
     }
 
+    // let customerCards = req.session.customerCards;
+    req.session.customerCards.forEach((card) => {
+      card.customerId = req.session.customer.id;
+      return card;
+    });
+
     if (customerExists) {
       res.render("checkout/review", {
         item,
@@ -325,6 +331,7 @@ export default class CheckoutController {
         );
 
         customerCards = result.data;
+        customerCards.customerId = req.session.customer.id;
       }catch(err){
         console.log(err);
       }
@@ -474,5 +481,56 @@ export default class CheckoutController {
     };
     req.session.customer = {id: req.params.id}
     res.render('checkout/payment', {item: req.session.item, stepper});
+  }
+
+  static async deleteCard(req, res){
+    const {customerId, cardId} = req.params;
+
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step4: {
+        status: "active",
+        label: "4",
+      },
+    };
+
+    try{
+      const customerController = new CustomersController(client);
+      await customerController.deleteCard(customerId, cardId);
+
+      const {result, ...httpResponse} = await customerController.getCards(customerId);
+      
+
+      return res.render("checkout/review", {
+        item: req.session.item,
+        customer: req.session.customer,
+        customerCards: result.data,
+        customerExists: true,
+        stepper,
+        alertMessage: {type: "success", message: "Você excluiu seu cartão com sucesso!"}
+      });
+      
+    }catch(err){
+      console.log(err);
+      return res.render("checkout/review", {
+        item: req.session.item,
+        customer: req.session.customer,
+        customerCards: result.data,
+        customerExists: true,
+        stepper,
+        alertMessage: {type: "danger", message: "Tivemos um problema ao excluir o seu cartão. Tente novamente mais tarde"}
+      });
+    }
   }
 }
