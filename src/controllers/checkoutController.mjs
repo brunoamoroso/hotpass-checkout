@@ -15,7 +15,6 @@ configDotenv();
 
 export default class CheckoutController {
   static async identify(req, res) {
-    console.log(process.env.PGMSK);
     const userId = req.params.id;
     const itemId = req.params.itemId;
     let customerExists = false;
