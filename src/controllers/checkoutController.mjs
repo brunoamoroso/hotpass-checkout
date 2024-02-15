@@ -61,6 +61,7 @@ export default class CheckoutController {
       req.session.customer = result.data[0];
 
       try {
+        console.log(client);
         const customerController = new CustomersController(client);
         const { result, ...httpResponse } = await customerController.getCards(
           req.session.customer.id
