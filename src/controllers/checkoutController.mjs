@@ -551,4 +551,8 @@ export default class CheckoutController {
       });
     }
   }
+
+  static success (req, res){
+    return res.render('checkout/success', {layout: false});
+  }
 }
