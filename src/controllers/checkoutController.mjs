@@ -45,60 +45,7 @@ export default class CheckoutController {
 
     req.session.botName = req.params.botName;
     req.session.userId = userId;
-
-    try {
-      const customerController = new CustomersController(client);
-      const { result, ...httpResponse } = await customerController.getCustomers(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        userId,
-        undefined
-      );
-
-      req.session.customer = result.data[0];
-
-      try {
-        const customerController = new CustomersController(client);
-        const { result, ...httpResponse } = await customerController.getCards(
-          req.session.customer.id
-        );
-
-        req.session.customerCards = result.data;
-        customerExists = true;
-        stepper = {
-          step1: {
-            status: "done",
-            label: '<i class="bi bi-check-lg"></i>',
-          },
-          step2: {
-            status: "done",
-            label: '<i class="bi bi-check-lg"></i>',
-          },
-          step3: {
-            status: "done",
-            label: '<i class="bi bi-check-lg"></i>',
-          },
-          step4: {
-            status: "active",
-            label: "4",
-          },
-        };
-      } catch (err) {
-        if (err instanceof ApiError) {
-          console.log(err);
-          return;
-        }
-      }
-    } catch (err) {
-      if (err instanceof ApiError) {
-        console.log(err);
-      }
-      throw new Error(err);
-    }
-
+    
     if (itemId.includes("plan")) {
       try {
         const plansController = new PlansController(client);
@@ -142,6 +89,65 @@ export default class CheckoutController {
       }
     }
 
+    try {
+      const customerController = new CustomersController(client);
+      const { result, ...httpResponse } = await customerController.getCustomers(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        userId,
+        undefined
+      );
+
+      if(result.data.length === 0){
+        res.render("checkout/identify", { item, stepper });
+        return;
+      }
+
+      req.session.customer = result.data[0];
+
+      try {
+        const customerController = new CustomersController(client);
+        const { result, ...httpResponse } = await customerController.getCards(
+          req.session.customer.id
+        );
+
+        req.session.customerCards = result.data;
+        customerExists = true;
+        stepper = {
+          step1: {
+            status: "done",
+            label: '<i class="bi bi-check-lg"></i>',
+          },
+          step2: {
+            status: "done",
+            label: '<i class="bi bi-check-lg"></i>',
+          },
+          step3: {
+            status: "done",
+            label: '<i class="bi bi-check-lg"></i>',
+          },
+          step4: {
+            status: "active",
+            label: "4",
+          },
+        };
+      } catch (err) {
+        if (err instanceof ApiError) {
+          console.log(err);
+          return;
+        }
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        console.log(err);
+      }
+      throw new Error(err);
+    }
+
+
     // let customerCards = req.session.customerCards;
     req.session.customerCards.forEach((card) => {
       card.customerId = req.session.customer.id;
@@ -159,8 +165,6 @@ export default class CheckoutController {
       });
       return;
     }
-
-    res.render("checkout/identify", { item, stepper });
   }
 
   static async identifyPost(req, res) {
