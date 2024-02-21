@@ -403,8 +403,12 @@ export default class CheckoutController {
               bot_name: req.session.botName,
             };
             axios.post(webhookURL, data);
+            res.render("checkout/success", {
+              item: req.session.item,
+              customer: req.session.customer
+            });
           }
-          return resp.json();
+          return;
         });
       } catch (err) {
         throw new Error(err);
@@ -461,7 +465,7 @@ export default class CheckoutController {
             });
           }
 
-          return resp.json();
+          return
         });
       } catch (err) {
         console.log(err);
