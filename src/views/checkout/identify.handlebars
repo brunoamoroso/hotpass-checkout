@@ -181,6 +181,17 @@
       return;
     }
 
+   
+   //test if there's  any character beyond the latin alphabet characters 
+    const invalidName = /([^A-Za-z\p{L}\s])/g.test(fullnameInput.value);
+    if(invalidName){
+      event.preventDefault();
+      event.stopPropagation();
+      fullnameInput.classList.add('is-invalid');
+      document.getElementById('fullnameValidation').innerText = "O nome só deve conter letras do alfabeto";
+      return;
+    }
+
     if(!isValidCPF(cpfInput.value)){
       cpfInput.classList.add('is-invalid');
       document.getElementById('cpfValidation').innerText = 'O CPF que você preencheu não é válido';
