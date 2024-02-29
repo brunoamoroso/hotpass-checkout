@@ -392,13 +392,13 @@ export default class CheckoutController {
             Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
           },
           body: JSON.stringify(bodySubscriptionOrder),
-        }).then((resp) => {
+        }).then(async (resp) => {
+          const response = await resp.json();
           if (resp.status === 200) {
             const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
             const data = {
               customer_chat_id: req.session.customer.code,
-              customer_pgme_id: req.session.customer.id,
-              plan_pgme_id: req.session.item.id,
+              subscription_id: response.id,
               type_item_bought: "subscription",
               bot_name: req.session.botName,
             };
@@ -453,7 +453,6 @@ export default class CheckoutController {
             const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
             const data = {
               customer_chat_id: req.session.customer.code,
-              customer_pgme_id: req.session.customer.id,
               pack_id: req.session.item.id,
               type_item_bought: "pack",
               bot_name: req.session.botName,
