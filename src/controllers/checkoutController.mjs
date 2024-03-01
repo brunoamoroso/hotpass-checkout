@@ -534,6 +534,7 @@ export default class CheckoutController {
 
       const {result, ...httpResponse} = await customerController.getCards(customerId);
       
+      result.data.customerId = customerId;
 
       return res.render("checkout/review", {
         item: req.session.item,
@@ -546,15 +547,18 @@ export default class CheckoutController {
       });
       
     }catch(err){
-      console.log(err);
+      let errMessage = "Tivemos um problema ao excluir o seu cartão. Tente novamente mais tarde";
+
+      if(err.result.message === 'This card can not be deleted. Please cancel all active subscriptions on this card to continue.') errMessage = "O cartão não pode ser deletado. Por favor cancele primerio todas as assinaturas que estão ativas nele."
+
       return res.render("checkout/review", {
         item: req.session.item,
         customer: req.session.customer,
-        customerCards: result.data,
+        customerCards: req.session.customerCards,
         customerExists: true,
         stepper,
         dynamicURL: process.env.CHECKOUT_DOMAIN,
-        alertMessage: {type: "danger", message: "Tivemos um problema ao excluir o seu cartão. Tente novamente mais tarde"}
+        alertMessage: {type: "danger", message: errMessage}
       });
     }
   }
