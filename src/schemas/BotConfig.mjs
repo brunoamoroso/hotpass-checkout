@@ -10,7 +10,7 @@ const botConfigSchema = new Schema(
     },
     split_rules: {
       type: Array,
-    }
+    },
   },
   {
     timestamps: true,
