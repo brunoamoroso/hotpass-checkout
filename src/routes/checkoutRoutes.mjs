@@ -10,7 +10,8 @@ router.get("/success", CheckoutController.success);
 
 router.post('/identify', CheckoutController.identifyPost);
 router.post('/address', CheckoutController.addressPost);
-router.post('/payment', CheckoutController.paymentPost);
+router.post('/addCard', CheckoutController.paymentPost);
+router.post('/payment', CheckoutController.choosePaymentPost);
 router.post('/confirmPayment', CheckoutController.confirmPayment);
 
 export default router;
