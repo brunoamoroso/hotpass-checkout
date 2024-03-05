@@ -18,7 +18,6 @@ export default class CheckoutController {
   static async identify(req, res) {
     req.session.userId = req.params.id;
     req.session.botName = req.params.botName;
-    req.session.save();
     const itemId = req.params.itemId;
     let customerExists = false;
     let item = {};
@@ -103,8 +102,7 @@ export default class CheckoutController {
       );
 
       if (result.data.length === 0) {
-        res.render("checkout/identify", { item, stepper });
-        return;
+        return res.render("checkout/identify", { item, stepper });
       }
 
       req.session.customer = result.data[0];
@@ -292,6 +290,8 @@ export default class CheckoutController {
 
   static async choosePaymentPost(req, res) {
     const {choosePaymentRadio} = req.body || {};
+    const botName = req.session.botName;
+    console.log("BotName on the top: " + botName);
 
     const stepper = {
       step1: {
