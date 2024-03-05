@@ -5,6 +5,7 @@ import exphbs from "express-handlebars";
 import session from "express-session";
 import ConnectMongoDBSession from "connect-mongodb-session";
 
+
 //get dirname
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -44,15 +45,17 @@ store.on('error', (err) => {
 })
 
 app.use(session({
-  name: "session",
   secret: "hotsense_secret",
   resave: false,
   saveUninitialized: false,
   store: store,
   cookie: {
-    secure: false,
+    path: "/",
+    domain: "https://hotsense-payment.vercel.app/",
+    secure: true,
     maxAge: 360000,
     httpOnly: true,
+    sameSite: 'none',
   }
 }));
 
