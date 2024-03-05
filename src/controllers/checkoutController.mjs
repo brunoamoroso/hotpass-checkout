@@ -261,7 +261,6 @@ export default class CheckoutController {
     };
 
     try {
-      console.log(customer);
       const customerController = new CustomersController(client);
       const { result, ...httpResponse } =
         await customerController.createCustomer(customer);
