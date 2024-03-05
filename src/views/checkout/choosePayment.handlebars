@@ -2,7 +2,7 @@
     <main>
         <div class="box">
             <h3>Método de pagamento</h3>
-            <form action="/checkout/payment" method="post" id="formChoosePayment" class="mb-0">
+            <form action="/checkout/payment" method="post" id="formChoosePayment" class="mb-0" novalidate>
                 <div class="cards_list">
                     {{#each paymentType}}
                         <div class="form-check">

@@ -295,7 +295,7 @@ export default class CheckoutController {
 
   static async choosePaymentPost(req, res) {
     console.log(req.session);
-    const {choosePaymentRadio} = req.body || {};
+    const {choosePaymentRadio} = req.body;
 
     const stepper = {
       step1: {
