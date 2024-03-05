@@ -32,7 +32,7 @@ app.use(
 
 app.use(express.json());
 
-const MongoDBStore = ConnectMongoDBSession(sessions);
+const MongoDBStore = ConnectMongoDBSession(session);
 
 const store = new MongoDBStore({
   uri: process.env.MONGODB_URI + "checkoutSessionsDB",
