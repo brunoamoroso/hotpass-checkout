@@ -35,7 +35,7 @@ app.use(express.json());
 const MongoDBStore = connectMongoSessions(session);
 
 const store = new MongoDBStore({
-  uri: process.env.MONGODB_URI + "checkouSessionsDB",
+  uri: process.env.MONGODB_URI + "checkoutSessionsDB",
   collection: "express-sessions"
 });
 
