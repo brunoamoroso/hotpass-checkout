@@ -318,7 +318,7 @@ export default class CheckoutController {
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
 
-          console.log(botConfigs);
+          console.log("BotConfigs: " + botConfigs);
           const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
             return {
               amount: rule.amount,
@@ -357,6 +357,8 @@ export default class CheckoutController {
             }],
             closed: true
           }
+
+          console.log(bodyPixOrder);
 
           const ordersController = new OrdersController(client);
           const {result} = await ordersController.createOrder(bodyPixOrder);
