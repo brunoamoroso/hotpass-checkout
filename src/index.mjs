@@ -4,6 +4,7 @@ import checkoutRoutes from "./routes/checkoutRoutes.mjs";
 import exphbs from "express-handlebars";
 import session from "express-session";
 import {default as connectMongoSessions} from 'connect-mongodb-session';
+import cors from 'cors';
 
 //get dirname
 const __filename = new URL(import.meta.url).pathname;
