@@ -259,8 +259,9 @@ export default class CheckoutController {
       country: "BR",
       metadata: {},
     };
-    
+
     try {
+      console.log(customer);
       const customerController = new CustomersController(client);
       const { result, ...httpResponse } =
         await customerController.createCustomer(customer);
