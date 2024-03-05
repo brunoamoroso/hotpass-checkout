@@ -318,6 +318,8 @@ export default class CheckoutController {
         try{
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
+
+          console.log(botConfigs);
           const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
             return {
               amount: rule.amount,
