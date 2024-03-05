@@ -18,7 +18,7 @@ export default class CheckoutController {
   static async identify(req, res) {
     req.session.userId = req.params.id;
     req.session.botName = req.params.botName;
-    console.log(req.session.botName);
+    req.session.save();
     const itemId = req.params.itemId;
     let customerExists = false;
     let item = {};
@@ -163,13 +163,12 @@ export default class CheckoutController {
     ];
 
     if (customerExists) {
-      res.render("checkout/choosePayment", {
+      return res.render("checkout/choosePayment", {
         item,
         customer: req.session.customer,
         stepper,
         paymentType: paymentType
       });
-      return;
     }
   }
 
