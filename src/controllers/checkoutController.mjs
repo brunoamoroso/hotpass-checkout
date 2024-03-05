@@ -291,7 +291,7 @@ export default class CheckoutController {
   static async choosePaymentPost(req, res) {
     const {choosePaymentRadio} = req.body || {};
     const botName = req.session.botName;
-    console.log("BotName on the top: " + botName);
+    console.log("ReqSession " + req.session);
 
     const stepper = {
       step1: {
