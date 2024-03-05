@@ -1,0 +1,39 @@
+<div class="col-xs-12 col-md pb-5 pb-md-0">
+  <main>
+      <div class="box">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3>Métodos de Pagamento</h3>
+        </div>
+
+        <form action="/checkout/payment" method="post" id="form-payment-methods" class="mb-0">
+            <div class="cards_list">
+            {{#each paymentTypes}}
+                <div class="form-check">
+                <div class="row">
+                    <div class="col d-flex align-items-center">
+                    <input
+                        type="radio"
+                        class="form-check-input mt-0"
+                        name="paymentMethods"
+                        value="{{this.type}}"
+                        {{#if @first}}checked{{/if}}
+                    />
+                    <div class="row">
+                        <div class="col d-flex flex-row">
+                        <label class="d-flex flex-row align-items-center gap-1" for={{this.type}}>{{{this.icon}}}{{this.name}}</label>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            {{/each}}
+            </div>
+            <div class="row mt-5">
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Avançar</button>
+                </div>
+            </div>
+        </form>
+      </div>
+  </main>
+</div>
