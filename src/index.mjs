@@ -38,7 +38,7 @@ app.use(express.json());
 app.use(session({
   name: "session",
   secret: "hotsense_secret",
-  resave: false,
+  resave: true,
   saveUninitialized: false,
   store: new FileStore({
     logFn: function(){},

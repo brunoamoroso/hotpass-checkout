@@ -160,6 +160,8 @@ export default class CheckoutController {
       { icon: '<i class="bi bi-credit-card-fill"></i>', name: "Cartão de Crédito", type: "credit_card" },
     ];
 
+    console.log(req.session);
+
     if (customerExists) {
       return res.render("checkout/choosePayment", {
         item,
@@ -274,6 +276,7 @@ export default class CheckoutController {
           },
           { icon: '<i class="bi bi-credit-card-fill"></i>', name: "Cartão de Crédito", type: "credit_card" },
         ];
+
         res.render("checkout/choosePayment", {
           item: req.session.item,
           stepper,
@@ -289,9 +292,10 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res) {
+    console.log(req.session);
     const {choosePaymentRadio} = req.body || {};
     const botName = req.session.botName;
-    console.log(req.session);
+
 
     const stepper = {
       step1: {
