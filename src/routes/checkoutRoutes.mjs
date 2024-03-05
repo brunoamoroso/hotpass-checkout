@@ -10,6 +10,7 @@ router.get("/success", CheckoutController.success);
 
 router.post('/identify', CheckoutController.identifyPost);
 router.post('/address', CheckoutController.addressPost);
+router.get('/choosePayment', CheckoutController.choosePayment);
 router.post('/payment', CheckoutController.paymentPost);
 router.post('/confirmPayment', CheckoutController.confirmPayment);
 

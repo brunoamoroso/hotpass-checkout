@@ -277,6 +277,42 @@ export default class CheckoutController {
     }
   }
 
+  static choosePayment(req, res){
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "active",
+        label: "3",
+      },
+      step4: {
+        status: "",
+        label: "4",
+      },
+    };
+
+    const paymentTypes = [
+      {
+        icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
+        name: "Pix",
+        type: "pix"
+      },
+      {
+        icon: '<i class="bi bi-credit-card-fill"></i>',
+        name: "Cartão de Crédito",
+        type: "credit_card",
+      }
+    ];
+
+    return res.render('checkout/choosePayment', {item: req.session.item, stepper, paymentTypes});
+  }
+
   static async paymentPost(req, res) {
     const stepper = {
       step1: {
