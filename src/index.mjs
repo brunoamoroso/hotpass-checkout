@@ -3,7 +3,10 @@ import path from "path";
 import checkoutRoutes from "./routes/checkoutRoutes.mjs";
 import exphbs from "express-handlebars";
 import session from "express-session";
-import {default as connectMongoDBSession} from 'connect-mongodb-session';
+import os from 'os';
+import FileStoreFactory from "session-file-store";
+
+const FileStore = FileStoreFactory(session);
 
 //get dirname
 const __filename = new URL(import.meta.url).pathname;
@@ -32,25 +35,17 @@ app.use(
 
 app.use(express.json());
 
-const MongoDBStore = connectMongoDBSession(session);
-
-const store = new MongoDBStore({
-  uri: process.env.MONGODB_URI + "checkoutSessionsDB",
-  collection: "express-sessions"
-});
-
-store.on('error', (err) => {
-  console.log(err);
-});
-
 app.use(session({
   name: "session",
   secret: "hotsense_secret",
   resave: false,
   saveUninitialized: false,
-  store: store,
+  store: new FileStore({
+    logFn: function(){},
+    path: path.join(os.tmpdir(), "sessions"),
+  }),
   cookie: {
-    secure: false,
+    secure: true,
     maxAge: 360000,
     httpOnly: true,
   }
