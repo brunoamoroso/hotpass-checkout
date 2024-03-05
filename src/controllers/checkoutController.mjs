@@ -315,10 +315,12 @@ export default class CheckoutController {
     switch (choosePaymentRadio){
       case "pix":
         try{
+          console.log("BotName: " + req.session.botName);
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
 
           console.log("BotConfigs: " + botConfigs);
+          return;
           const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
             return {
               amount: rule.amount,
