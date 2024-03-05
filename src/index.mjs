@@ -54,13 +54,14 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: store,
+  proxy: true,
   cookie: {
     path: "/",
     domain: "https://hotsense-payment.vercel.app/",
     secure: true,
     maxAge: 360000,
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none',
   }
 }));
 
