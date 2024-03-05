@@ -10,8 +10,10 @@ router.get("/success", CheckoutController.success);
 
 router.post('/identify', CheckoutController.identifyPost);
 router.post('/address', CheckoutController.addressPost);
-router.get('/choosePayment', CheckoutController.choosePayment);
+// router.post('/choosePayment', CheckoutController.choosePayment);
 router.post('/payment', CheckoutController.paymentPost);
+//before was the creating the first card or the same as newCard
+// router.post('/payment', CheckoutController.paymentPost);
 router.post('/confirmPayment', CheckoutController.confirmPayment);
 
 export default router;

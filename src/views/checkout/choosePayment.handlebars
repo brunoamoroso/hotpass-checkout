@@ -5,7 +5,7 @@
           <h3>Métodos de Pagamento</h3>
         </div>
 
-        <form id="form-cards" class="mb-0">
+        <form action="/checkout/payment" method="post" id="form-payment-methods" class="mb-0">
             <div class="cards_list">
             {{#each paymentTypes}}
                 <div class="form-check">
@@ -14,7 +14,7 @@
                     <input
                         type="radio"
                         class="form-check-input mt-0"
-                        name="cardsRadio"
+                        name="paymentMethods"
                         value="{{this.type}}"
                         {{#if @first}}checked{{/if}}
                     />
