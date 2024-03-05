@@ -161,7 +161,7 @@ export default class CheckoutController {
     ];
 
     console.log(req.session);
-
+    req.session.save();
     if (customerExists) {
       return res.render("checkout/choosePayment", {
         item,
