@@ -173,7 +173,6 @@ export default class CheckoutController {
   }
 
   static async identifyPost(req, res) {
-    console.log("UserId: " +req.session.userId);
     const { fullname, email, cpf, cellphone } = req.body;
     const item = req.session.item;
 
@@ -260,10 +259,7 @@ export default class CheckoutController {
       country: "BR",
       metadata: {},
     };
-
-    console.log(customer);
-    return;
-
+    
     try {
       const customerController = new CustomersController(client);
       const { result, ...httpResponse } =
