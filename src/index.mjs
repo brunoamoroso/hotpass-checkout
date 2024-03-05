@@ -32,6 +32,11 @@ app.use(
 
 app.use(express.json());
 
+app.use(cors({
+  origin: "https://hotsense-payment.vercel.app/",
+  credentials: true
+}))
+
 const MongoDBStore = connectMongoSessions(session);
 
 const store = new MongoDBStore({
