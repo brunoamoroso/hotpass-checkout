@@ -173,6 +173,7 @@ export default class CheckoutController {
   }
 
   static async identifyPost(req, res) {
+    console.log(req.session);
     const { fullname, email, cpf, cellphone } = req.body;
     const item = req.session.item;
 
@@ -223,6 +224,7 @@ export default class CheckoutController {
   }
 
   static async addressPost(req, res) {
+    console.log(req.session);
     const stepper = {
       step1: {
         status: "done",
