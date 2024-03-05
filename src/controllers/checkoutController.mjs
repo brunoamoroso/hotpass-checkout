@@ -243,73 +243,52 @@ export default class CheckoutController {
       },
     };
 
-    // const { zipcode, city, uf, neighborhood, street, number, complement } =
-    //   req.body;
-    // let customer = req.session.customer;
+    const { zipcode, city, uf, neighborhood, street, number, complement } =
+      req.body;
+    let customer = req.session.customer;
 
-    // customer.address = {
-    //   line1: street.concat(", ", neighborhood, ", ", number),
-    //   line2: complement,
-    //   street: street,
-    //   number: (number === '') ? 'S/N' : number,
-    //   neighborhood: neighborhood,
-    //   complement: complement,
-    //   zipCode: zipcode.replace("-", ""),
-    //   city: city,
-    //   state: uf,
-    //   country: "BR",
-    //   metadata: {},
-    // };
+    customer.address = {
+      line1: street.concat(", ", neighborhood, ", ", number),
+      line2: complement,
+      street: street,
+      number: (number === '') ? 'S/N' : number,
+      neighborhood: neighborhood,
+      complement: complement,
+      zipCode: zipcode.replace("-", ""),
+      city: city,
+      state: uf,
+      country: "BR",
+      metadata: {},
+    };
 
     try {
-      const userId = "5928261091";
       const customerController = new CustomersController(client);
-      const { result, ...httpResponse } = await customerController.getCustomers(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        userId,
-        undefined
-      );
+      const { result, ...httpResponse } =
+        await customerController.createCustomer(customer);
 
-      req.session.customer = result.data[0];
-      const paymentType = [
-        {
-          icon: "<img src='/imgs/pix_logo.svg' alt='pix logo' height='16' />",
-          name: "Pix",
-          type: "pix",
-        },
-        { icon: '<i class="bi bi-credit-card-fill"></i>', name: "Cartão de Crédito", type: "credit_card" },
-      ];
-      res.render("checkout/choosePayment", {
-        item: req.session.item,
-        stepper,
-        paymentType,
-      });
+      if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
+        req.session.customer.id = result.id;
+        req.session.customer = customer;
+        const paymentType = [
+          {
+            icon: "<img src='/imgs/pix_logo.svg' alt='pix logo' height='16' />",
+            name: "Pix",
+            type: "pix",
+          },
+          { icon: '<i class="bi bi-credit-card-fill"></i>', name: "Cartão de Crédito", type: "credit_card" },
+        ];
+        res.render("checkout/choosePayment", {
+          item: req.session.item,
+          stepper,
+          paymentType,
+        });
+      }
     } catch (err) {
-      console.log(err);
+      if (err instanceof ApiError) {
+        console.log(err);
+      }
+      throw new Error(err);
     }
-    // https://2lttqsbg-3000.brs.devtunnels.ms/checkout/swbot/5928261090/plan_N2bXlb7u2uyYOx6J
-
-    // try {
-    //   const customerController = new CustomersController(client);
-    //   const { result, ...httpResponse } =
-    //     await customerController.createCustomer(customer);
-
-    //   if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
-    //     req.session.customer.id = result.id;
-    //     req.session.customer = customer;
-    //     const paymentType = [{type: "pix"}, {type: "credit_card"}]
-    //     res.render("checkout/choosePayment", { item: req.session.item, stepper,  paymentType});
-    //   }
-    // } catch (err) {
-    //   if (err instanceof ApiError) {
-    //     console.log(err);
-    //   }
-    //   throw new Error(err);
-    // }
   }
 
   static async choosePaymentPost(req, res) {
@@ -339,6 +318,8 @@ export default class CheckoutController {
         try{
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
+
+          console.log(botConfigs);
           const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
             return {
               amount: rule.amount,
