@@ -173,6 +173,7 @@ export default class CheckoutController {
   }
 
   static async identifyPost(req, res) {
+    console.log("UserId: " +req.session.userId);
     const { fullname, email, cpf, cellphone } = req.body;
     const item = req.session.item;
     const userId = req.session.userId;
