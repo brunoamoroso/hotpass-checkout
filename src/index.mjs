@@ -44,13 +44,13 @@ store.on('error', (err) => {
 })
 
 app.use(session({
-  path: "/",
-  name: "session",
   secret: "hotsense_secret",
   resave: false,
   saveUninitialized: false,
   store: store,
   cookie: {
+    path: "/",
+    domain: "https://hotsense-payment.vercel.app/",
     secure: true,
     maxAge: 360000,
     httpOnly: true,
