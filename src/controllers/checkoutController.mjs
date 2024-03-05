@@ -176,7 +176,6 @@ export default class CheckoutController {
     console.log("UserId: " +req.session.userId);
     const { fullname, email, cpf, cellphone } = req.body;
     const item = req.session.item;
-    const userId = req.session.userId;
 
     const stepper = {
       step1: {
@@ -202,7 +201,7 @@ export default class CheckoutController {
     const phone = cellphone.slice(5, 15).replace("-", "");
 
     const bodyCustomer = {
-      code: userId,
+      code: req.session.userId,
       name: fullname,
       email: email,
       document: cpf.replaceAll(".", "").replace("-", ""),
