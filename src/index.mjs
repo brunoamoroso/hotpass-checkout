@@ -40,10 +40,6 @@ app.use(session({
   secret: "hotsense_secret",
   resave: false,
   saveUninitialized: false,
-  store: new FileStore({
-    logFn: function(){},
-    path: path.join(os.tmpdir(), "sessions"),
-  }),
   cookie: {
     secure: false,
     maxAge: 360000,

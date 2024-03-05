@@ -7,10 +7,10 @@ import {
 import client from "../utils/pgmeClient.mjs";
 import base64 from "base-64";
 import axios from "axios";
-import { configDotenv } from "dotenv";
 import { getModelByTenant } from "../utils/tenantUtils.mjs";
 import packSchema from "../schemas/Pack.mjs";
 import botConfigSchema from "../schemas/BotConfig.mjs";
+import { configDotenv } from "dotenv";
 
 configDotenv();
 
