@@ -261,6 +261,9 @@ export default class CheckoutController {
       metadata: {},
     };
 
+    console.log(customer);
+    return;
+
     try {
       const customerController = new CustomersController(client);
       const { result, ...httpResponse } =
@@ -287,7 +290,7 @@ export default class CheckoutController {
       if (err instanceof ApiError) {
         console.log(err);
       }
-      throw new Error(err);
+      console.log(err);
     }
   }
 
