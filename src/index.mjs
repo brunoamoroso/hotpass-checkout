@@ -44,6 +44,7 @@ store.on('error', (err) => {
 })
 
 app.use(session({
+  path: "/",
   name: "session",
   secret: "hotsense_secret",
   resave: false,
@@ -53,6 +54,7 @@ app.use(session({
     secure: true,
     maxAge: 360000,
     httpOnly: true,
+    sameSite: 'none',
   }
 }));
 
