@@ -156,15 +156,32 @@ export default class CheckoutController {
     });
 
     if (customerExists) {
-      res.render("checkout/review", {
+      // res.render("checkout/review", {
+      //   item,
+      //   customer: req.session.customer,
+      //   customerCards: req.session.customerCards,
+      //   customerExists,
+      //   stepper,
+      //   dynamicURL: process.env.CHECKOUT_DOMAIN
+      // });
+      const paymentTypes = [
+        {
+          icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
+          name: "Pix",
+          type: "pix"
+        },
+        {
+          icon: '<i class="bi bi-credit-card-fill"></i>',
+          name: "Cartão de Crédito",
+          type: "credit_card",
+        }
+      ];
+
+      return res.render('checkout/choosePayment', {
         item,
-        customer: req.session.customer,
-        customerCards: req.session.customerCards,
-        customerExists,
         stepper,
-        dynamicURL: process.env.CHECKOUT_DOMAIN
-      });
-      return;
+        paymentTypes
+      })
     }
   }
 
@@ -290,7 +307,8 @@ export default class CheckoutController {
     }
   }
 
-  static async paymentPost(req, res){
+  static async choosePaymentPost(req, res){
+    console.log(req.session);
     const { paymentMethods } = req.body;
     const stepper = {
       step1: {
@@ -316,6 +334,11 @@ export default class CheckoutController {
         break;
 
       case "credit_card":
+          if(req.session.customerCards){
+
+          }
+
+          return res.redirect(`checkout/newCard/${req.session.customer.id}`);
         break;
     }
 
