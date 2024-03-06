@@ -183,6 +183,7 @@ export default class CheckoutController {
         }
       ];
 
+      console.log(req.session);
       return res.render('checkout/choosePayment', {
         item,
         stepper,
@@ -315,6 +316,7 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res){
+    console.log(req.session);
     const { paymentMethods } = req.body;
     const stepper = {
       step1: {
