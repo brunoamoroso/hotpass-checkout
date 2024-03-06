@@ -334,6 +334,23 @@ export default class CheckoutController {
             const customer = req.session.customer;
             customer.metadata = {};
 
+            const qrCode = {
+              // mock
+              code:  "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/fbd26dbd-1076-4c09-8645-58aa3164c65352040000530398654041.005802BR5925BRUNO PANATTO AMOROSO 0866014RIO DE JANEIRO62290525pacltfwba7t5fk21fla82gb6t6304FFA0",
+              img: "https://api.pagar.me/core/v5/transactions/tran_GEQz6Q5SRSW6jKnB/qrcode?payment_method=pix"
+              // code: result.charges[0].lastTransaction.qrCode,
+              // img: result.charges[0].lastTransaction.qrCodeUrl
+            }
+
+          return res.render("checkout/review", {
+              item: item,
+              customer: customer,
+              qrCode,
+              customerExists: true,
+              stepper,
+              dynamicURL: process.env.CHECKOUT_DOMAIN
+            });
+
             const BotConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
             const botConfigs = await BotConfigsModel.findOne().lean();
 
@@ -385,13 +402,16 @@ export default class CheckoutController {
               };
 
               const qrCode = {
-                code: result.charges[0].lastTransaction.qrCode,
-                img: result.charges[0].lastTransaction.qrCodeUrl
+                // mock
+                code:  "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/fbd26dbd-1076-4c09-8645-58aa3164c65352040000530398654041.005802BR5925BRUNO PANATTO AMOROSO 0866014RIO DE JANEIRO62290525pacltfwba7t5fk21fla82gb6t6304FFA0",
+                img: "https://api.pagar.me/core/v5/transactions/tran_GEQz6Q5SRSW6jKnB/qrcode?payment_method=pix"
+                // code: result.charges[0].lastTransaction.qrCode,
+                // img: result.charges[0].lastTransaction.qrCodeUrl
               }
 
             return res.render("checkout/review", {
-                item: req.session.item,
-                customer: req.session.customer,
+                item: item,
+                customer: customer,
                 qrCode,
                 customerExists: true,
                 stepper,
