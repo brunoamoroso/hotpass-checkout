@@ -28,9 +28,11 @@
       paymentText.innerText = 'Efetuando Compra...';
       spinner.style.display = 'inline-flex';
 
-      const card = document.querySelector('input[name="cardsRadio"]:checked').value;
+      const cardsRadio = document.querySelector('input[name="cardsRadio"]:checked') !== null;
 
-      if(card !== null){
+      if(cardsRadio){
+        const card = cardsRadio.value;
+
         const requestBody = JSON.stringify({cardId: card});
 
         await fetch('{{dynamicURL}}/checkout/confirmPayment', {
