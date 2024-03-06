@@ -330,7 +330,14 @@ export default class CheckoutController {
 
       case "credit_card":
           if(req.session.customerCards){
-
+            return res.render("checkout/review", {
+              item: req.session.item,
+              customer: req.session.customer,
+              customerCards: req.session.customerCards,
+              customerExists: true,
+              stepper,
+              dynamicURL: process.env.CHECKOUT_DOMAIN
+            });
           }
 
           res.redirect(`newCard/${req.session.customer.id}`);
