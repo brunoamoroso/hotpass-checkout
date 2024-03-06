@@ -30,22 +30,24 @@
 
       const card = document.querySelector('input[name="cardsRadio"]:checked').value;
 
-      const requestBody = JSON.stringify({cardId: card});
+      if(card !== null){
+        const requestBody = JSON.stringify({cardId: card});
 
-      await fetch('{{dynamicURL}}/checkout/confirmPayment', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        mode: "cors",
-        body: requestBody
-      }).then(response => {
-        if(response.status === 200){
-          window.location.href = '{{dynamicURL}}/checkout/success';
-        }
-      }).catch(err => {
-        console.log(err)
-      });
+        await fetch('{{dynamicURL}}/checkout/confirmPayment', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: "cors",
+          body: requestBody
+        }).then(response => {
+          if(response.status === 200){
+            window.location.href = '{{dynamicURL}}/checkout/success';
+          }
+        }).catch(err => {
+          console.log(err)
+        });
+      }
     }
   </script>
   <body>
