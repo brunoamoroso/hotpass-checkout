@@ -363,19 +363,63 @@ export default class CheckoutController {
 
             const orderController = new OrdersController(client);
             const {result} = await orderController.createOrder(bodyPixOrder);
+            
+            if(result.status === 'pending'){
+              const stepper = {
+                step1: {
+                  status: "done",
+                  label: '<i class="bi bi-check-lg"></i>',
+                },
+                step2: {
+                  status: "done",
+                  label: '<i class="bi bi-check-lg"></i>',
+                },
+                step3: {
+                  status: "done",
+                  label: '<i class="bi bi-check-lg"></i>',
+                },
+                step4: {
+                  status: "active",
+                  label: "4",
+                },
+              };
 
-            console.log(result.charges[0].lastTransaction);
-            return;
+              const qrCode = {
+                code: result.charges[0].lastTransaction.qrCode,
+                img: result.charges[0].lastTransaction.qrCodeUrl
+              }
+
+            return res.render("checkout/review", {
+                item: req.session.item,
+                customer: req.session.customer,
+                qrCode,
+                customerExists: true,
+                stepper,
+                dynamicURL: process.env.CHECKOUT_DOMAIN
+              });
+            }
+
+            const paymentTypes = [
+              {
+                icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
+                name: "Pix",
+                type: "pix"
+              },
+              {
+                icon: '<i class="bi bi-credit-card-fill"></i>',
+                name: "Cartão de Crédito",
+                type: "credit_card",
+              }
+            ];
+
+            const alertMessage = {
+              type: 'danger',
+              message: 'Ocorreu um erro ao tentar gerar o pix de pagamento, por favor utilize o cartão de crédito como método de pagamento ou avise a dona do bot.'
+            }
+
+            return res.render("checkout/choosePayment", { paymentTypes, item: req.session.item, stepper, alertMessage });
 
             // don't render customerCards and then render some box for pix
-            // return res.render("checkout/review", {
-            //   item: req.session.item,
-            //   customer: req.session.customer,
-            //   customerCards: req.session.customerCards,
-            //   customerExists: true,
-            //   stepper,
-            //   dynamicURL: process.env.CHECKOUT_DOMAIN
-            // });
           }catch(err){
             console.log(err);
           }
