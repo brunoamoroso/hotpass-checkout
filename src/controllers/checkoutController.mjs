@@ -365,6 +365,25 @@ export default class CheckoutController {
             const {result} = await orderController.createOrder(bodyPixOrder);
             
             if(result.status === 'pending'){
+              const stepper = {
+                step1: {
+                  status: "done",
+                  label: '<i class="bi bi-check-lg"></i>',
+                },
+                step2: {
+                  status: "done",
+                  label: '<i class="bi bi-check-lg"></i>',
+                },
+                step3: {
+                  status: "done",
+                  label: '<i class="bi bi-check-lg"></i>',
+                },
+                step4: {
+                  status: "active",
+                  label: "4",
+                },
+              };
+
               const qrCode = {
                 code: result.charges[0].lastTransaction.qrCode,
                 img: result.charges[0].lastTransaction.qrCodeUrl
@@ -373,7 +392,7 @@ export default class CheckoutController {
             return res.render("checkout/review", {
                 item: req.session.item,
                 customer: req.session.customer,
-                customerCards: req.session.customerCards,
+                qrCode,
                 customerExists: true,
                 stepper,
                 dynamicURL: process.env.CHECKOUT_DOMAIN
