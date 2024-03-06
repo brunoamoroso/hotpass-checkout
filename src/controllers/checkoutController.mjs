@@ -338,7 +338,7 @@ export default class CheckoutController {
 
           }
 
-          return res.redirect(`checkout/newCard/${req.session.customer.id}`);
+          return res.redirect(`newCard/${req.session.customer.id}`);
         break;
     }
 
@@ -556,7 +556,8 @@ export default class CheckoutController {
   }
 
   static async newCard(req, res){
-    
+    console.log(req.session);
+    const item = req.session.item
     const stepper = {
       step1: {
         status: "done",
@@ -576,7 +577,7 @@ export default class CheckoutController {
       },
     };
     req.session.customer = {id: req.params.id}
-    res.render('checkout/payment', {item: req.session.item, stepper});
+    res.render('checkout/newCard', {item, stepper});
   }
 
   static async deleteCard(req, res){
