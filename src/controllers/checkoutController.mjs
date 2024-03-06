@@ -146,10 +146,7 @@ export default class CheckoutController {
         }
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        console.log(err);
-      }
-      throw new Error(err);
+      console.log(err);
     }
 
 
@@ -162,14 +159,6 @@ export default class CheckoutController {
     req.session.save();
 
     if (customerExists) {
-      // res.render("checkout/review", {
-      //   item,
-      //   customer: req.session.customer,
-      //   customerCards: req.session.customerCards,
-      //   customerExists,
-      //   stepper,
-      //   dynamicURL: process.env.CHECKOUT_DOMAIN
-      // });
       const paymentTypes = [
         {
           icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
@@ -183,7 +172,6 @@ export default class CheckoutController {
         }
       ];
 
-      console.log(req.session);
       res.render('checkout/choosePayment', {
         item,
         stepper,
@@ -316,40 +304,38 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res){
-    console.log(req.session);
     const { paymentMethods } = req.body;
-    return res.status(400).send('Testando');
-    // const stepper = {
-    //   step1: {
-    //     status: "done",
-    //     label: '<i class="bi bi-check-lg"></i>',
-    //   },
-    //   step2: {
-    //     status: "done",
-    //     label: '<i class="bi bi-check-lg"></i>',
-    //   },
-    //   step3: {
-    //     status: "active",
-    //     label: "3",
-    //   },
-    //   step4: {
-    //     status: "",
-    //     label: "4",
-    //   },
-    // };
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "active",
+        label: "3",
+      },
+      step4: {
+        status: "",
+        label: "4",
+      },
+    };
 
-    // switch (paymentMethods){
-    //   case "pix":
-    //     break;
+    switch (paymentMethods){
+      case "pix":
+        break;
 
-    //   case "credit_card":
-    //       if(req.session.customerCards){
+      case "credit_card":
+          if(req.session.customerCards){
 
-    //       }
+          }
 
-    //       // res.redirect(`newCard/${req.session.customer.id}`);
-    //     break;
-    // }
+          res.redirect(`newCard/${req.session.customer.id}`);
+        break;
+    }
   }
 
   // the create empty create new card for a new user
