@@ -50,6 +50,14 @@
           console.log(err)
         });
       }
+      
+      await fetch('{{dynamicURL}}/checkout/confirmPayment', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: "cors",
+      });
     }
   </script>
   <body>
