@@ -1,6 +1,7 @@
 import {
   ApiError,
   CustomersController,
+  OrdersController,
   PlansController,
 } from "@pagarme/pagarme-nodejs-sdk";
 import client from "../utils/pgmeClient.mjs";
@@ -56,6 +57,7 @@ export default class CheckoutController {
           id: result.id,
           name: result.name,
           price: priceFormat.format(result.items[0].pricingScheme.price / 100),
+          amount: result.items[0].pricingScheme.price,
           type: "subscription",
         };
 
@@ -326,11 +328,96 @@ export default class CheckoutController {
 
     switch (paymentMethods){
       case "pix":
+          try{
+            const item = req.session.item;
+
+            const customer = req.session.customer;
+            customer.metadata = {};
+
+            const bodyPixOrder = {
+                code: customer.id,
+                items: [{
+                  code: item.id,
+                  amount: item.amount,
+                  description: item.name,
+                  category: item.type,
+                  quantity: 1,
+                }],
+                customer: customer,
+                payments: [{
+                  paymentMethod: "pix",
+                  pix: {
+                    expiresIn: 900,
+                    additionalInformation: [{
+                      name: item.name,
+                      value: item.amount.toString() 
+                    }]
+                  }
+                }],
+                closed: true
+              };
+            // const bodyPixOrder = {
+            //   items: [{
+            //     amount: ,
+            //     description: ,
+            //     quantity: ,
+            //   }],
+            //   customer: {
+            //     code: ,
+            //     name: ,
+            //     email: ,
+            //     type: ,
+            //     document: ,
+            //     phones: {
+            //       mobilePhone: {
+            //         countryCode: ,
+            //         number: ,
+            //         areaCode:  ,
+            //       }
+            //     }
+            //   },
+            //   payments: [{
+            //     paymentMethod: "pix",
+            //     pix: {
+            //       expiresIn: 900,
+            //       additionalInformation: [{
+            //         name: ,
+            //         value: 
+            //       }]
+            //     }
+            //   }]
+            // }
+
+            const orderController = new OrdersController(client);
+            const {result} = await orderController.createOrder(bodyPixOrder);
+
+            console.log(result);
+            return;
+
+            // don't render customerCards and then render some box for pix
+            // return res.render("checkout/review", {
+            //   item: req.session.item,
+            //   customer: req.session.customer,
+            //   customerCards: req.session.customerCards,
+            //   customerExists: true,
+            //   stepper,
+            //   dynamicURL: process.env.CHECKOUT_DOMAIN
+            // });
+          }catch(err){
+            console.log(err);
+          }
         break;
 
       case "credit_card":
           if(req.session.customerCards){
-
+            return res.render("checkout/review", {
+              item: req.session.item,
+              customer: req.session.customer,
+              customerCards: req.session.customerCards,
+              customerExists: true,
+              stepper,
+              dynamicURL: process.env.CHECKOUT_DOMAIN
+            });
           }
 
           res.redirect(`newCard/${req.session.customer.id}`);
