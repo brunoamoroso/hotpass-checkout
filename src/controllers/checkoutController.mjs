@@ -308,6 +308,7 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res){
+    console.log(req.session);
     const { paymentMethods } = req.body;
     const stepper = {
       step1: {
@@ -337,7 +338,7 @@ export default class CheckoutController {
 
           }
 
-          return res.render('checkout/payment')
+          return res.redirect(`checkout/newCard/${req.session.customer.id}`);
         break;
     }
 
