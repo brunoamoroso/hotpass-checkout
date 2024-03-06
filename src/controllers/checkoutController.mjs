@@ -184,7 +184,7 @@ export default class CheckoutController {
       ];
 
       console.log(req.session);
-      return res.render('checkout/choosePayment', {
+      res.render('checkout/choosePayment', {
         item,
         stepper,
         paymentTypes
@@ -346,7 +346,7 @@ export default class CheckoutController {
 
           }
 
-          return res.redirect(`newCard/${req.session.customer.id}`);
+          res.redirect(`newCard/${req.session.customer.id}`);
         break;
     }
   }
