@@ -45,6 +45,7 @@ export default class CheckoutController {
 
     req.session.botName = req.params.botName;
     req.session.userId = userId;
+    req.session.save();
     
     if (itemId.includes("plan")) {
       try {
@@ -59,6 +60,7 @@ export default class CheckoutController {
         };
 
         req.session.item = item;
+        req.session.save();
       } catch (err) {
         if (err instanceof ApiError) {
           console.log(err);
@@ -84,6 +86,7 @@ export default class CheckoutController {
         };
 
         req.session.item = item;
+        req.session.save();
       } catch (err) {
         console.log(err);
       }
@@ -102,12 +105,12 @@ export default class CheckoutController {
       );
 
       if(result.data.length === 0){
-        console.log(req.session);
         res.render("checkout/identify", { item, stepper });
         return;
       }
 
       req.session.customer = result.data[0];
+      req.session.save();
 
       try {
         const customerController = new CustomersController(client);
@@ -116,6 +119,7 @@ export default class CheckoutController {
         );
 
         req.session.customerCards = result.data;
+        req.session.save();
         customerExists = true;
         stepper = {
           step1: {
@@ -154,6 +158,7 @@ export default class CheckoutController {
       card.customerId = req.session.customer.id;
       return card;
     });
+    req.session.save();
 
     if (customerExists) {
       // res.render("checkout/review", {
@@ -186,7 +191,6 @@ export default class CheckoutController {
   }
 
   static async identifyPost(req, res) {
-    console.log(req.session);
     const { fullname, email, cpf, cellphone } = req.body;
     const item = req.session.item;
     const userId = req.session.userId;
@@ -233,6 +237,7 @@ export default class CheckoutController {
     };
 
     req.session.customer = bodyCustomer;
+    req.session.save();
 
     res.render("checkout/address", { item, stepper });
   }
@@ -283,6 +288,7 @@ export default class CheckoutController {
       if (httpResponse.statusCode === 200 || httpResponse.statusCode === 201) {
         req.session.customer.id = result.id;
         req.session.customer = customer;
+        req.session.save();
 
         const paymentTypes = [
           {
@@ -308,7 +314,6 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res){
-    console.log(req.session);
     const { paymentMethods } = req.body;
     const stepper = {
       step1: {
@@ -341,13 +346,11 @@ export default class CheckoutController {
           return res.redirect(`newCard/${req.session.customer.id}`);
         break;
     }
-
-    console.log(req.session);
-    console.log(req.body);
   }
 
   // the create empty create new card for a new user
   static async createCardPost(req, res) {
+    console.log(req.session);
     const stepper = {
       step1: {
         status: "done",
@@ -375,6 +378,7 @@ export default class CheckoutController {
         );
   
         req.session.customer = result;
+        req.session.save();
       }catch(err){
         throw Error(err);
       }
@@ -395,9 +399,6 @@ export default class CheckoutController {
         billingAddressId: req.session.customer.address.id,
       };
 
-      const user = process.env.PGMSK;
-      const password = "";
-
       const customerController = new CustomersController(client);
       const {result, ...httpResponse} = await customerController.createCard(req.session.customer.id, bodyCreateCard);
         
@@ -410,23 +411,22 @@ export default class CheckoutController {
 
         customerCards = result.data;
         customerCards.customerId = req.session.customer.id;
+
+        res.render("checkout/review", {
+          item: req.session.item,
+          customer: req.session.customer,
+          customerCards: customerCards,
+          customerExists: true,
+          stepper,
+          dynamicURL: process.env.CHECKOUT_DOMAIN
+        });
       }catch(err){
         console.log(err);
       }
-
-      const customerExists = true;
-
-      res.render("checkout/review", {
-        item: req.session.item,
-        customer: req.session.customer,
-        customerCards: customerCards,
-        customerExists,
-        stepper,
-        dynamicURL: process.env.CHECKOUT_DOMAIN
-      });
     } catch (err) {
       console.log(err);
-      res.render('checkout/payment', { item: req.session.item, customer: req.session.customer, stepper, error: "Ocorreu um problema ao tentar criar o seu cartão de crédito. Verifique os dados e tente novamente."});
+      console.log(req.session);
+      res.redirect(`checkout/newCard/${req.session.customer.id}`);
       return;
     }
   }
