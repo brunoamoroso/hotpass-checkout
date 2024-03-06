@@ -346,90 +346,90 @@ export default class CheckoutController {
     console.log(req.body);
   }
 
-  //the create empty create new card for a new user
-  // static async paymentPost(req, res) {
-  //   const stepper = {
-  //     step1: {
-  //       status: "done",
-  //       label: '<i class="bi bi-check-lg"></i>',
-  //     },
-  //     step2: {
-  //       status: "done",
-  //       label: '<i class="bi bi-check-lg"></i>',
-  //     },
-  //     step3: {
-  //       status: "done",
-  //       label: '<i class="bi bi-check-lg"></i>',
-  //     },
-  //     step4: {
-  //       status: "active",
-  //       label: "4",
-  //     },
-  //   };
+  // the create empty create new card for a new user
+  static async createCardPost(req, res) {
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step4: {
+        status: "active",
+        label: "4",
+      },
+    };
 
-  //   if(req.session.customer.document === undefined){
-  //     try{
-  //       const customerController = new CustomersController(client);
-  //       const { result, ...httpResponse } = await customerController.getCustomer(
-  //         req.session.customer.id,
-  //       );
+    if(req.session.customer.document === undefined){
+      try{
+        const customerController = new CustomersController(client);
+        const { result, ...httpResponse } = await customerController.getCustomer(
+          req.session.customer.id,
+        );
   
-  //       req.session.customer = result;
-  //     }catch(err){
-  //       throw Error(err);
-  //     }
-  //   }
+        req.session.customer = result;
+      }catch(err){
+        throw Error(err);
+      }
+    }
 
-  //   const { number, holder_name, due, cvv } = req.body;
-  //   const exp_month = parseInt(due.slice(0, 2));
-  //   const exp_year = parseInt(due.slice(3, 5));
+    const { number, holder_name, due, cvv } = req.body;
+    const exp_month = parseInt(due.slice(0, 2));
+    const exp_year = parseInt(due.slice(3, 5));
 
-  //   try {
-  //     const bodyCreateCard = {
-  //       number: number,
-  //       holderName: holder_name,
-  //       holderDocument: req.session.customer.document,
-  //       expMonth: exp_month,
-  //       expYear: exp_year,
-  //       cvv: cvv,
-  //       billingAddressId: req.session.customer.address.id,
-  //     };
+    try {
+      const bodyCreateCard = {
+        number: number,
+        holderName: holder_name,
+        holderDocument: req.session.customer.document,
+        expMonth: exp_month,
+        expYear: exp_year,
+        cvv: cvv,
+        billingAddressId: req.session.customer.address.id,
+      };
 
-  //     const user = process.env.PGMSK;
-  //     const password = "";
+      const user = process.env.PGMSK;
+      const password = "";
 
-  //     const customerController = new CustomersController(client);
-  //     const {result, ...httpResponse} = await customerController.createCard(req.session.customer.id, bodyCreateCard);
+      const customerController = new CustomersController(client);
+      const {result, ...httpResponse} = await customerController.createCard(req.session.customer.id, bodyCreateCard);
         
-  //     let customerCards;
-  //     try{
-  //       const customerController = new CustomersController(client);
-  //       const { result, ...httpResponse } = await customerController.getCards(
-  //         req.session.customer.id
-  //       );
+      let customerCards;
+      try{
+        const customerController = new CustomersController(client);
+        const { result, ...httpResponse } = await customerController.getCards(
+          req.session.customer.id
+        );
 
-  //       customerCards = result.data;
-  //       customerCards.customerId = req.session.customer.id;
-  //     }catch(err){
-  //       console.log(err);
-  //     }
+        customerCards = result.data;
+        customerCards.customerId = req.session.customer.id;
+      }catch(err){
+        console.log(err);
+      }
 
-  //     const customerExists = true;
+      const customerExists = true;
 
-  //     res.render("checkout/review", {
-  //       item: req.session.item,
-  //       customer: req.session.customer,
-  //       customerCards: customerCards,
-  //       customerExists,
-  //       stepper,
-  //       dynamicURL: process.env.CHECKOUT_DOMAIN
-  //     });
-  //   } catch (err) {
-  //     console.log(err);
-  //     res.render('checkout/payment', { item: req.session.item, customer: req.session.customer, stepper, error: "Ocorreu um problema ao tentar criar o seu cartão de crédito. Verifique os dados e tente novamente."});
-  //     return;
-  //   }
-  // }
+      res.render("checkout/review", {
+        item: req.session.item,
+        customer: req.session.customer,
+        customerCards: customerCards,
+        customerExists,
+        stepper,
+        dynamicURL: process.env.CHECKOUT_DOMAIN
+      });
+    } catch (err) {
+      console.log(err);
+      res.render('checkout/payment', { item: req.session.item, customer: req.session.customer, stepper, error: "Ocorreu um problema ao tentar criar o seu cartão de crédito. Verifique os dados e tente novamente."});
+      return;
+    }
+  }
 
   static async confirmPayment(req, res) {
     const {cardId} = req.body;
