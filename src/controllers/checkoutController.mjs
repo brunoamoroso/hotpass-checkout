@@ -334,6 +334,12 @@ export default class CheckoutController {
             const customer = req.session.customer;
             customer.metadata = {};
 
+            const BotConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
+            const botConfigs = await BotConfigsModel.findOne().lean();
+
+            console.log(botConfigs);
+            return;
+
             const bodyPixOrder = {
                 code: customer.id,
                 items: [{
@@ -354,39 +360,9 @@ export default class CheckoutController {
                     }]
                   }
                 }],
+                split: "",
                 closed: true
               };
-            // const bodyPixOrder = {
-            //   items: [{
-            //     amount: ,
-            //     description: ,
-            //     quantity: ,
-            //   }],
-            //   customer: {
-            //     code: ,
-            //     name: ,
-            //     email: ,
-            //     type: ,
-            //     document: ,
-            //     phones: {
-            //       mobilePhone: {
-            //         countryCode: ,
-            //         number: ,
-            //         areaCode:  ,
-            //       }
-            //     }
-            //   },
-            //   payments: [{
-            //     paymentMethod: "pix",
-            //     pix: {
-            //       expiresIn: 900,
-            //       additionalInformation: [{
-            //         name: ,
-            //         value: 
-            //       }]
-            //     }
-            //   }]
-            // }
 
             const orderController = new OrdersController(client);
             const {result} = await orderController.createOrder(bodyPixOrder);
