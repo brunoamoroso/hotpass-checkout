@@ -334,6 +334,9 @@ export default class CheckoutController {
             const customer = req.session.customer;
             customer.metadata = {};
 
+            const BotConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
+            const botConfigs = await BotConfigsModel.findOne().lean();
+
             const bodyPixOrder = {
                 code: customer.id,
                 items: [{
@@ -354,44 +357,14 @@ export default class CheckoutController {
                     }]
                   }
                 }],
+                split: botConfigs.split_rules,
                 closed: true
               };
-            // const bodyPixOrder = {
-            //   items: [{
-            //     amount: ,
-            //     description: ,
-            //     quantity: ,
-            //   }],
-            //   customer: {
-            //     code: ,
-            //     name: ,
-            //     email: ,
-            //     type: ,
-            //     document: ,
-            //     phones: {
-            //       mobilePhone: {
-            //         countryCode: ,
-            //         number: ,
-            //         areaCode:  ,
-            //       }
-            //     }
-            //   },
-            //   payments: [{
-            //     paymentMethod: "pix",
-            //     pix: {
-            //       expiresIn: 900,
-            //       additionalInformation: [{
-            //         name: ,
-            //         value: 
-            //       }]
-            //     }
-            //   }]
-            // }
 
             const orderController = new OrdersController(client);
             const {result} = await orderController.createOrder(bodyPixOrder);
 
-            console.log(result);
+            console.log(result.charges[0].lastTransaction);
             return;
 
             // don't render customerCards and then render some box for pix
