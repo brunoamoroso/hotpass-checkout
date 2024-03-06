@@ -1,0 +1,247 @@
+<script>
+  function handleCardNumberMask(){ 
+    const input = event.target;
+    const isValidKey = /([\d]|Backspace|Tab|Enter)/g.test(event.key);
+    const inputValue = event.target.value.replace(/ /g, "");
+      
+    if(!isValidKey){
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById(input.id).classList.add('is-invalid');
+      document.getElementById('cardNumberValidation').innerText = 'Só são aceitos números'; 
+      return; 
+    }
+
+    if(event.key === "Backspace"){
+      return;
+    }
+
+    if(event.key === "Tab"){
+      return;
+    }
+
+    if(event.key === "Enter"){
+      return;
+    }
+
+    if(inputValue.length >= 16){
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const key = event.key;
+    const cardNumber = inputValue + key;
+    input.value = cardNumber.replace(/(\d{4})(\d{0,4})(\d{0,4})(\d{0,4})/g, "$1 $2 $3 $4");
+  }
+
+  function handleDueMask(){
+    const input = event.target;
+    const isValidKey = /([\d]|Backspace|Tab|Enter)/g.test(event.key);
+    const inputValue = event.target.value.replace("/", "");
+      
+    if(!isValidKey){
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById(input.id).classList.add('is-invalid');
+      document.getElementById('dueValidation').innerText = 'Só são aceitos números'; 
+      return; 
+    }
+
+    if(event.key === "Backspace"){
+      return;
+    }
+
+    if(event.key === "Tab"){
+      return;
+    }
+
+    if(event.key === "Enter"){
+      return;
+    }
+
+    if(inputValue.length >= 4){
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const key = event.key;
+    const cardNumber = inputValue + key;
+    input.value = cardNumber.replace(/(\d{2})(\d{0,2})/g, "$1/$2");
+  }
+
+  function handleHolderNameUpperCase(){
+    const holderNameInput = event.target;
+    holderNameInput.value = holderNameInput.value.toUpperCase();
+  }
+
+  function handleSubmit(){
+    //getting error while reading cardnumber or holdername most probably holdername
+    const cardNumberInput = document.getElementById('number');
+    const holderNameInput = document.getElementById('holder_name');
+    const dueInput = document.getElementById('due');
+    const dueValidation = document.getElementById('dueValidation');
+    const cvvInput = document.getElementById('cvv');
+    let fieldsNotEmpty = true;
+
+    if(cardNumberInput.value === ""){
+      cardNumberInput.classList.add('is-invalid');
+      document.getElementById('cardNumberValidation').innerText = 'É obrigatório preencher este  campo';
+      fieldsNotEmpty = false;
+    }
+
+    if(holderNameInput.value === ""){
+      holderNameInput.classList.add('is-invalid');
+      document.getElementById('holderNameValidation').innerText = 'É obrigatório preencher este campo';
+      fieldsNotEmpty = false;
+    }
+
+    if(dueInput.value === ""){
+      dueInput.classList.add('is-invalid');
+      dueValidation.innerText = 'É obrigatório preencher este campo';
+      fieldsNotEmpty = false;
+    }
+
+    if(cvvInput.value === ""){
+      cvvInput.classList.add('is-invalid');
+      document.getElementById('cvvValidation').innerText = 'É obrigatório preencher este campo';
+      fieldsNotEmpty = false;
+    }
+
+    if(!fieldsNotEmpty){
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    
+    //test if there's  any character beyond the latin alphabet characters
+    const invalidHolderName = /([^A-Za-z\p{L}\s])/g.test(holderNameInput.value);
+    if(invalidHolderName){
+      event.preventDefault();
+      event.stopPropagation();
+      holderNameInput.classList.add('is-invalid');
+      document.getElementById('holderNameValidation').innerText = "O nome só deve conter letras do alfabeto";
+      return;
+    }
+
+    if(dueInput.value.slice(0,2) > 12){
+      event.preventDefault();
+      event.stopPropagation();
+      dueInput.classList.add('is-invalid');
+      dueValidation.innerText = 'O mês precisa ser entre 01 e 12';
+      return;
+    }
+
+    const currentYear = new Date().getFullYear().toString().slice(2,4);
+
+    if(dueInput.value.slice(3,5) < currentYear){
+      event.preventDefault();
+      event.stopPropagation();
+      dueInput.classList.add('is-invalid');
+      dueValidation.innerText = 'O ano da validade está anterior ao ano atual';
+      return;
+    }
+
+  }
+</script>
+{{#if error}}
+<div class="col-12">
+              <div class="alert alert-danger">
+                {{error}}
+              </div>
+            </div>
+{{/if}}
+<div class="col-xs-12 col-md pb-5 pb-md-0">
+  <main>
+    <div class="box">
+      <form
+        action="/checkout/payment"
+        class="needs-validation"
+        method="post"
+        onsubmit="handleSubmit()"
+        novalidate
+      >
+        <div class="row">
+          <div class="col-12">
+            <div class="row">
+              <div class="col mb-3">
+                <select name="" id="" class="form-select" disabled>
+                  <label for="installments" class="form-label">Quantidade de
+                    parcelas</label>
+                  <option name="installments" value="">1x de
+                    {{item.price}}</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="number" class="form-label">Número do Cartão</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  onkeydown="handleCardNumberMask()"
+                  id="number"
+                  name="number"
+                  aria-describedby="cardNumberValidation"
+                  placeholder="0000 0000 0000 0000"
+                />
+                <div id="cardNumberValidation" class="invalid-feedback"></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="holder_name" class="form-label">Nome como está no
+                  cartão</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="holder_name"
+                  name="holder_name"
+                  aria-describedby="emailValidation"
+                  placeholder="NOME COMO ESTÁ NO CARTÃO"
+                  oninput="handleHolderNameUpperCase()"
+                />
+                <div id="holderNameValidation" class="invalid-feedback"></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col mb-3">
+                <label for="due" class="form-label">Validade</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="due"
+                  name="due"
+                  onkeydown="handleDueMask()"
+                  placeholder="MM/AA"
+                />
+                <div id="dueValidation" class="invalid-feedback"></div>
+              </div>
+              <div class="col mb-3">
+                <label for="cvv" class="form-label">CVV</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="cvv"
+                  name="cvv"
+                  placeholder="000"
+                />
+                <div id="cvvValidation" class="invalid-feedback"></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary">Avançar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
