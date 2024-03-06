@@ -329,27 +329,29 @@ export default class CheckoutController {
     switch (paymentMethods){
       case "pix":
           try{
+            req.session.paymentType = "pix";
+            req.session.save();
             const item = req.session.item;
 
             const customer = req.session.customer;
             customer.metadata = {};
 
-            const qrCode = {
-              // mock
-              code:  "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/fbd26dbd-1076-4c09-8645-58aa3164c65352040000530398654041.005802BR5925BRUNO PANATTO AMOROSO 0866014RIO DE JANEIRO62290525pacltfwba7t5fk21fla82gb6t6304FFA0",
-              img: "https://api.pagar.me/core/v5/transactions/tran_GEQz6Q5SRSW6jKnB/qrcode?payment_method=pix"
-              // code: result.charges[0].lastTransaction.qrCode,
-              // img: result.charges[0].lastTransaction.qrCodeUrl
-            }
+          //   const qrCode = {
+          //     // mock
+          //     code:  "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/fbd26dbd-1076-4c09-8645-58aa3164c65352040000530398654041.005802BR5925BRUNO PANATTO AMOROSO 0866014RIO DE JANEIRO62290525pacltfwba7t5fk21fla82gb6t6304FFA0",
+          //     img: "https://api.pagar.me/core/v5/transactions/tran_GEQz6Q5SRSW6jKnB/qrcode?payment_method=pix"
+          //     // code: result.charges[0].lastTransaction.qrCode,
+          //     // img: result.charges[0].lastTransaction.qrCodeUrl
+          //   }
 
-          return res.render("checkout/review", {
-              item: item,
-              customer: customer,
-              qrCode,
-              customerExists: true,
-              stepper,
-              dynamicURL: process.env.CHECKOUT_DOMAIN
-            });
+          // return res.render("checkout/review", {
+          //     item: item,
+          //     customer: customer,
+          //     qrCode,
+          //     customerExists: true,
+          //     stepper,
+          //     dynamicURL: process.env.CHECKOUT_DOMAIN
+          //   });
 
             const BotConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
             const botConfigs = await BotConfigsModel.findOne().lean();
@@ -374,12 +376,18 @@ export default class CheckoutController {
                     }]
                   }
                 }],
-                split: botConfigs.split_rules,
+                split: {
+                  enabled: true,
+                  rules: botConfigs.split_rules
+                },
                 closed: true
               };
 
             const orderController = new OrdersController(client);
             const {result} = await orderController.createOrder(bodyPixOrder);
+
+            req.session.orderId = result.id;
+            req.session.save();
             
             if(result.status === 'pending'){
               const stepper = {
@@ -402,12 +410,10 @@ export default class CheckoutController {
               };
 
               const qrCode = {
-                // mock
-                code:  "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/fbd26dbd-1076-4c09-8645-58aa3164c65352040000530398654041.005802BR5925BRUNO PANATTO AMOROSO 0866014RIO DE JANEIRO62290525pacltfwba7t5fk21fla82gb6t6304FFA0",
-                img: "https://api.pagar.me/core/v5/transactions/tran_GEQz6Q5SRSW6jKnB/qrcode?payment_method=pix"
-                // code: result.charges[0].lastTransaction.qrCode,
-                // img: result.charges[0].lastTransaction.qrCodeUrl
+                code: result.charges[0].lastTransaction.qrCode,
+                img: result.charges[0].lastTransaction.qrCodeUrl
               }
+
 
             return res.render("checkout/review", {
                 item: item,
@@ -418,7 +424,8 @@ export default class CheckoutController {
                 dynamicURL: process.env.CHECKOUT_DOMAIN
               });
             }
-
+          }catch(err){
+            console.log(err);
             const paymentTypes = [
               {
                 icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
@@ -438,14 +445,13 @@ export default class CheckoutController {
             }
 
             return res.render("checkout/choosePayment", { paymentTypes, item: req.session.item, stepper, alertMessage });
-
-            // don't render customerCards and then render some box for pix
-          }catch(err){
-            console.log(err);
           }
         break;
 
       case "credit_card":
+          req.session.paymentType = "credit_card";
+          req.session.save();
+
           if(req.session.customerCards){
             return res.render("checkout/review", {
               item: req.session.item,
@@ -550,43 +556,40 @@ export default class CheckoutController {
   }
 
   static async confirmPayment(req, res) {
-    const {cardId} = req.body;
-    const user = process.env.PGMSK;
-    const password = "";
-
-    const botConfig = getModelByTenant(
+    const stepper = {
+      step1: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step2: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step3: {
+        status: "done",
+        label: '<i class="bi bi-check-lg"></i>',
+      },
+      step4: {
+        status: "active",
+        label: "4",
+      },
+    };
+    
+    const BotConfigsModel = getModelByTenant(
       req.session.botName + "db",
       "BotConfig",
       botConfigSchema
     );
-    const BotConfigs = await botConfig.findOne().lean();
+    const botConfigs = await BotConfigsModel.findOne().lean();
 
-    if (req.session.item.type === "subscription") {
+    if(req.session.paymentType === "pix"){
       try {
-        const bodySubscriptionOrder = {
-          code: req.session.item.id,
-          plan_id: req.session.item.id,
-          customer_id: req.session.customer.id,
-          payment_method: "credit_card",
-          card_id: cardId,
-          installments: 1,
-          split: {
-            enabled: true,
-            rules: BotConfigs.split_rules,
-          },
-        };
+        const orderController = new OrdersController(client);
+        const  {result} = orderController.getOrder(req.session.orderId);
+        const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
 
-        await fetch("https://api.pagar.me/core/v5/subscriptions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
-          },
-          body: JSON.stringify(bodySubscriptionOrder),
-        }).then(async (resp) => {
-          const response = await resp.json();
-          if (resp.status === 200) {
-            const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+        if(result.status === "paid"){
+          if(req.session.item.type === "subscription"){
             const data = {
               customer_chat_id: req.session.customer.code,
               subscription_id: response.id,
@@ -599,49 +602,8 @@ export default class CheckoutController {
               customer: req.session.customer
             });
           }
-          return;
-        });
-      } catch (err) {
-        throw new Error(err);
-      }
-    }
 
-    if (req.session.item.type === "pack") {
-      try {
-        const bodyPackOrder = {
-          code: req.session.customer.id,
-          customer_id: req.session.customer.id,
-          items: [
-            {
-              amount: req.session.item.amount,
-              description: "Pack",
-              quantity: 1,
-              code: req.session.item.id,
-            },
-          ],
-          payments: [
-            {
-              payment_method: "credit_card",
-              credit_card: {
-                card_id: cardId
-              },
-              amount: req.session.item.amount,
-              split: BotConfigs.split_rules,
-            },
-          ],
-          closed: true,
-        };
-
-        await fetch("https://api.pagar.me/core/v5/orders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
-          },
-          body: JSON.stringify(bodyPackOrder),
-        }).then((resp) => {
-          if (resp.status === 200) {
-            const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+          if(req.session.item.type === "pack"){
             const data = {
               customer_chat_id: req.session.customer.code,
               pack_id: req.session.item.id,
@@ -654,21 +616,151 @@ export default class CheckoutController {
               customer: req.session.customer
             });
           }
+        }
 
-          return
-        });
+        throw new Error("Pix not paid yet");
       } catch (err) {
-        console.log(err);
-        res.render("checkout/review", {
+        console(err);
+        let alertMessage = {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
+
+        if(err.message === "Pix not paid yet"){
+          alertMessage.message = "Não recebemos o seu pix ainda.";
+        }
+        return res.render("checkout/review", {
           item: req.session.item,
           customer: req.session.customer,
           customerCards: req.session.customerCards,
           customerExists: true,
           stepper,
           dynamicURL: process.env.CHECKOUT_DOMAIN,
-          alertMessage: {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
+          alertMessage,
         });
-        return res.status(500).send("Tivemos um problema");
+      }
+    }
+
+    if(req.session.paymentType === "credit_card"){
+      const {cardId} = req.body;
+      const user = process.env.PGMSK;
+      const password = "";
+  
+      if (req.session.item.type === "subscription") {
+        try {
+          const bodySubscriptionOrder = {
+            code: req.session.item.id,
+            plan_id: req.session.item.id,
+            customer_id: req.session.customer.id,
+            payment_method: "credit_card",
+            card_id: cardId,
+            installments: 1,
+            split: {
+              enabled: true,
+              rules: botConfigs.split_rules,
+            },
+          };
+  
+          await fetch("https://api.pagar.me/core/v5/subscriptions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+            },
+            body: JSON.stringify(bodySubscriptionOrder),
+          }).then(async (resp) => {
+            const response = await resp.json();
+            if (resp.status === 200) {
+              const data = {
+                customer_chat_id: req.session.customer.code,
+                subscription_id: response.id,
+                type_item_bought: "subscription",
+                bot_name: req.session.botName,
+              };
+              axios.post(webhookURL, data);
+              res.render("checkout/success", {
+                item: req.session.item,
+                customer: req.session.customer
+              });
+            }
+            return;
+          });
+        } catch (err) {
+          console.log(err);
+          res.render("checkout/review", {
+            item: req.session.item,
+            customer: req.session.customer,
+            customerCards: req.session.customerCards,
+            customerExists: true,
+            stepper,
+            dynamicURL: process.env.CHECKOUT_DOMAIN,
+            alertMessage: {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
+          });
+        }
+      }
+  
+      if (req.session.item.type === "pack") {
+        try {
+          const bodyPackOrder = {
+            code: req.session.customer.id,
+            customer_id: req.session.customer.id,
+            items: [
+              {
+                amount: req.session.item.amount,
+                description: "Pack",
+                quantity: 1,
+                code: req.session.item.id,
+              },
+            ],
+            payments: [
+              {
+                payment_method: "credit_card",
+                credit_card: {
+                  card_id: cardId
+                },
+                amount: req.session.item.amount,
+                split: {
+                  enabled:true,
+                  rules: botConfigs.split_rules
+                },
+              },
+            ],
+            closed: true,
+          };
+  
+          await fetch("https://api.pagar.me/core/v5/orders", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+            },
+            body: JSON.stringify(bodyPackOrder),
+          }).then((resp) => {
+            if (resp.status === 200) {
+              const data = {
+                customer_chat_id: req.session.customer.code,
+                pack_id: req.session.item.id,
+                type_item_bought: "pack",
+                bot_name: req.session.botName,
+              };
+              axios.post(webhookURL, data);
+              res.render("checkout/success", {
+                item: req.session.item,
+                customer: req.session.customer
+              });
+            }
+  
+            return
+          });
+        } catch (err) {
+          console.log(err);
+          return res.render("checkout/review", {
+            item: req.session.item,
+            customer: req.session.customer,
+            customerCards: req.session.customerCards,
+            customerExists: true,
+            stepper,
+            dynamicURL: process.env.CHECKOUT_DOMAIN,
+            alertMessage: {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
+          });
+        }
       }
     }
   }
