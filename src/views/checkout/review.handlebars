@@ -1,3 +1,12 @@
+<script type="text/javascript">
+
+  function copyQrcode(){
+    navigator.clipboard.writeText("{{qrCode.code}}");
+    window.alert("O código foi copiado, vá até o aplicativo do seu banco para pagar");
+  }
+
+</script>
+
 {{#if alertMessage}}
 <div class="col-12">
   <div class="alert alert-{{alertMessage.type}}">
@@ -18,70 +27,85 @@
       </div>
     </div>
   </div> --}}
-  <div class="row">
-    <div class="col">
-      <div class="box">
-        {{#if customerCards}}
-        <div class="d-flex justify-content-between align-items-center">
-          <h3>Cartões</h3>
-          <a href="/checkout/newCard/{{customer.id}}"><button
-              class="btn btn-outline-primary btn-sm"
-            >Adicionar Cartão</button></a>
-        </div>
+  <div class="box">
+    {{#if customerCards}}
+    <div class="d-flex justify-content-between align-items-center">
+      <h3>Cartões</h3>
+      <a href="/checkout/newCard/{{customer.id}}"><button
+          class="btn btn-outline-primary btn-sm"
+        >Adicionar Cartão</button></a>
+    </div>
 
-        <div class="cards_list">
-          <form id="form-cards">
-          {{#each customerCards}}
-            <div class="form-check">
+    <div class="cards_list">
+      <form id="form-cards">
+      {{#each customerCards}}
+        <div class="form-check">
+          <div class="row">
+            <div class="col d-flex align-items-center">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="cardsRadio"
+                value="{{this.id}}"
+                {{#if @first}}checked{{/if}}
+              />
               <div class="row">
-                <div class="col d-flex align-items-center">
-                  <input
-                    type="radio"
-                    class="form-check-input"
-                    name="cardsRadio"
-                    value="{{this.id}}"
-                    {{#if @first}}checked{{/if}}
-                  />
-                  <div class="row">
-                    <div class="col d-flex flex-column">
-                      <label for={{this.id}}>{{this.brand}}</label>
-                      <span>{{this.lastFourDigits}}
-                        {{this.expMonth}}/{{this.expYear}}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="col d-flex justify-content-end align-items-center">
-                  <a href="/checkout/deleteCard/{{this.customerId}}/{{this.id}}">
-                    <div class="btn btn-link btn-sm">
-                      <i class="bi bi-trash-fill"></i>
-                      Excluir
-                    </div>
-                  </a>
+                <div class="col d-flex flex-column">
+                  <label for={{this.id}}>{{this.brand}}</label>
+                  <span>{{this.lastFourDigits}}
+                    {{this.expMonth}}/{{this.expYear}}</span>
                 </div>
               </div>
             </div>
-          {{/each}}
-          </form>
-        </div>
-        {{else}}
-        <div class="row">
-          <div class="col">
-            <div class="d-flex">
-              <h3>QRCode Pix</h3>
+            <div class="col d-flex justify-content-end align-items-center">
+              <a href="/checkout/deleteCard/{{this.customerId}}/{{this.id}}">
+                <div class="btn btn-link btn-sm">
+                  <i class="bi bi-trash-fill"></i>
+                  Excluir
+                </div>
+              </a>
             </div>
           </div>
         </div>
-        <div class="row">
-          <div class="col">
-            <h5>Scaneie o QRCode</h5>
-            <img src={{qrCode.img}} alt="qrcode image pix">
-            <hr />
-            <h5>Pix Copia e Cola</h5>
-            <span>{{qrCode.code}}</span>
+      {{/each}}
+      </form>
+    </div>
+    {{else}}
+      <div class="row">
+        <div class="col">
+          <div class="d-flex">
+            <h3>QRCode Pix</h3>
           </div>
         </div>
-        {{/if}}
       </div>
-    </div>
+      <div class="row">
+        <div class="col">
+          <div class="row">
+            <div class="col">
+              <h5>Scaneie o QRCode</h5>
+              <div class="d-flex justify-content-center">
+                <img src={{qrCode.img}} alt="qrcode image pix" class="img-fluid">
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div class="row mt-4">
+            <div class="col">
+              <div class="row">
+                <div class="col">
+                  <h5>Pix Copia e Cola</h5>
+                  <span class="text-wrap text-break">{{qrCode.code}}</span>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col d-grid">
+                  <a href="#" class="btn btn-primary" onclick="copyQrcode()"><i class="bi bi-copy"></i> Clique aqui para copiar</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {{/if}}
   </div>
 </div>
