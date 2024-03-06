@@ -153,11 +153,12 @@ export default class CheckoutController {
     }
 
 
-    // let customerCards = req.session.customerCards;
-    req.session.customerCards.forEach((card) => {
+    let customerCards = req.session.customerCards;
+    customerCards.forEach((card) => {
       card.customerId = req.session.customer.id;
       return card;
     });
+    req.session.customerCards = customerCards;
     req.session.save();
 
     if (customerExists) {
@@ -410,7 +411,13 @@ export default class CheckoutController {
         );
 
         customerCards = result.data;
-        customerCards.customerId = req.session.customer.id;
+        customerCards.forEach((card) => {
+          card.customerId = req.session.customer.id;
+          return card;
+        });
+        req.session.customerCards = customerCards;
+        req.session.save();
+
 
         res.render("checkout/review", {
           item: req.session.item,
@@ -425,8 +432,7 @@ export default class CheckoutController {
       }
     } catch (err) {
       console.log(err);
-      console.log(req.session);
-      res.redirect(`checkout/newCard/${req.session.customer.id}`);
+      res.render(`checkout/newCard`, { item: req.session.item, customer: req.session.customer, stepper, error: "Ocorreu um problema ao tentar criar o seu cartão de crédito. Verifique os dados e tente novamente."});
       return;
     }
   }
