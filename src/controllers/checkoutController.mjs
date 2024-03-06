@@ -318,37 +318,38 @@ export default class CheckoutController {
   static async choosePaymentPost(req, res){
     console.log(req.session);
     const { paymentMethods } = req.body;
-    const stepper = {
-      step1: {
-        status: "done",
-        label: '<i class="bi bi-check-lg"></i>',
-      },
-      step2: {
-        status: "done",
-        label: '<i class="bi bi-check-lg"></i>',
-      },
-      step3: {
-        status: "active",
-        label: "3",
-      },
-      step4: {
-        status: "",
-        label: "4",
-      },
-    };
+    return res.status(400).send('Testando');
+    // const stepper = {
+    //   step1: {
+    //     status: "done",
+    //     label: '<i class="bi bi-check-lg"></i>',
+    //   },
+    //   step2: {
+    //     status: "done",
+    //     label: '<i class="bi bi-check-lg"></i>',
+    //   },
+    //   step3: {
+    //     status: "active",
+    //     label: "3",
+    //   },
+    //   step4: {
+    //     status: "",
+    //     label: "4",
+    //   },
+    // };
 
-    switch (paymentMethods){
-      case "pix":
-        break;
+    // switch (paymentMethods){
+    //   case "pix":
+    //     break;
 
-      case "credit_card":
-          if(req.session.customerCards){
+    //   case "credit_card":
+    //       if(req.session.customerCards){
 
-          }
+    //       }
 
-          res.redirect(`newCard/${req.session.customer.id}`);
-        break;
-    }
+    //       // res.redirect(`newCard/${req.session.customer.id}`);
+    //     break;
+    // }
   }
 
   // the create empty create new card for a new user
