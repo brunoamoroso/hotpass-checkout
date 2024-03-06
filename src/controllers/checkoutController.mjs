@@ -337,9 +337,6 @@ export default class CheckoutController {
             const BotConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
             const botConfigs = await BotConfigsModel.findOne().lean();
 
-            console.log(botConfigs);
-            return;
-
             const bodyPixOrder = {
                 code: customer.id,
                 items: [{
@@ -360,14 +357,14 @@ export default class CheckoutController {
                     }]
                   }
                 }],
-                split: "",
+                split: botConfigs.split_rules,
                 closed: true
               };
 
             const orderController = new OrdersController(client);
             const {result} = await orderController.createOrder(bodyPixOrder);
 
-            console.log(result);
+            console.log(result.charges[0].lastTransaction);
             return;
 
             // don't render customerCards and then render some box for pix
