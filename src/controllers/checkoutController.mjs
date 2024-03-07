@@ -384,6 +384,8 @@ export default class CheckoutController {
             
             const response = await createPixOrder.json();
 
+            console.log(response);
+
             req.session.orderId = response.id;
             req.session.save();
             
