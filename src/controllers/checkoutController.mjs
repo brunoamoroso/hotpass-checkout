@@ -568,7 +568,7 @@ export default class CheckoutController {
       botConfigSchema
     );
     const botConfigs = await BotConfigsModel.findOne().lean();
-    const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+    const webhookURL = process.env.BOTS_DOMAIN +"/"+ req.session.botName;
 
     if(req.session.paymentType === "pix"){
       try {
