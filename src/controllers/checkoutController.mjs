@@ -407,8 +407,8 @@ export default class CheckoutController {
               };
 
               const qrCode = {
-                code: result.charges[0].lastTransaction.qrCode,
-                img: result.charges[0].lastTransaction.qrCodeUrl
+                code: response.charges[0].lastTransaction.qrCode,
+                img: response.charges[0].lastTransaction.qrCodeUrl
               }
 
               req.session.qrCode = qrCode;
