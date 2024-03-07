@@ -3,6 +3,7 @@ import {
   CustomersController,
   OrdersController,
   PlansController,
+  SubscriptionsController,
 } from "@pagarme/pagarme-nodejs-sdk";
 import client from "../utils/pgmeClient.mjs";
 import base64 from "base-64";
@@ -336,22 +337,28 @@ export default class CheckoutController {
             const customer = req.session.customer;
             customer.metadata = {};
 
-          //   const qrCode = {
-          //     // mock
-          //     code:  "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/fbd26dbd-1076-4c09-8645-58aa3164c65352040000530398654041.005802BR5925BRUNO PANATTO AMOROSO 0866014RIO DE JANEIRO62290525pacltfwba7t5fk21fla82gb6t6304FFA0",
-          //     img: "https://api.pagar.me/core/v5/transactions/tran_GEQz6Q5SRSW6jKnB/qrcode?payment_method=pix"
-          //     // code: result.charges[0].lastTransaction.qrCode,
-          //     // img: result.charges[0].lastTransaction.qrCodeUrl
-          //   }
+            const qrCode = {
+              // mock
+              code:  "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/fbd26dbd-1076-4c09-8645-58aa3164c65352040000530398654041.005802BR5925BRUNO PANATTO AMOROSO 0866014RIO DE JANEIRO62290525pacltfwba7t5fk21fla82gb6t6304FFA0",
+              img: "https://api.pagar.me/core/v5/transactions/tran_GEQz6Q5SRSW6jKnB/qrcode?payment_method=pix"
+              // code: result.charges[0].lastTransaction.qrCode,
+              // img: result.charges[0].lastTransaction.qrCodeUrl
+            }
 
-          // return res.render("checkout/review", {
-          //     item: item,
-          //     customer: customer,
-          //     qrCode,
-          //     customerExists: true,
-          //     stepper,
-          //     dynamicURL: process.env.CHECKOUT_DOMAIN
-          //   });
+          req.session.orderId = "or_A268PmeUkU0PD7Kk";
+          req.session.qrCode = qrCode;
+          req.session.save();
+
+          return res.render("checkout/review", {
+              reviewView: true,
+              item: item,
+              customer: customer,
+              qrCode,
+              customerExists: true,
+              stepper,
+              dynamicURL: process.env.CHECKOUT_DOMAIN
+            });
+
 
             const BotConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
             const botConfigs = await BotConfigsModel.findOne().lean();
@@ -414,8 +421,12 @@ export default class CheckoutController {
                 img: result.charges[0].lastTransaction.qrCodeUrl
               }
 
+              req.session.qrCode = qrCode;
+              req.session.save();
+
 
             return res.render("checkout/review", {
+                reviewView: true,
                 item: item,
                 customer: customer,
                 qrCode,
@@ -454,6 +465,7 @@ export default class CheckoutController {
 
           if(req.session.customerCards){
             return res.render("checkout/review", {
+              reviewView: true,
               item: req.session.item,
               customer: req.session.customer,
               customerCards: req.session.customerCards,
@@ -538,6 +550,7 @@ export default class CheckoutController {
 
 
         res.render("checkout/review", {
+          reviewView: true,
           item: req.session.item,
           customer: req.session.customer,
           customerCards: customerCards,
@@ -581,12 +594,12 @@ export default class CheckoutController {
       botConfigSchema
     );
     const botConfigs = await BotConfigsModel.findOne().lean();
+    const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
 
     if(req.session.paymentType === "pix"){
       try {
         const orderController = new OrdersController(client);
-        const  {result} = orderController.getOrder(req.session.orderId);
-        const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+        const  {result, ...httpResponse} = await orderController.getOrder(req.session.orderId);
 
         if(result.status === "paid"){
           if(req.session.item.type === "subscription"){
@@ -618,28 +631,30 @@ export default class CheckoutController {
           }
         }
 
-        throw new Error("Pix not paid yet");
+        throw new Error("Pix not paid yet");  
       } catch (err) {
-        console(err);
+        console.log(err);
         let alertMessage = {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
 
         if(err.message === "Pix not paid yet"){
-          alertMessage.message = "Não recebemos o seu pix ainda.";
+          alertMessage.message = "Não recebemos o seu pix ainda. Vá ao seu banco, efetue o pagamento e volte aqui para confirmar.";
         }
-        return res.render("checkout/review", {
+        res.render("checkout/review", {
+          reviewView: true,
           item: req.session.item,
           customer: req.session.customer,
-          customerCards: req.session.customerCards,
           customerExists: true,
+          qrCode: req.session.qrCode,
           stepper,
           dynamicURL: process.env.CHECKOUT_DOMAIN,
           alertMessage,
         });
+        return;
       }
     }
 
     if(req.session.paymentType === "credit_card"){
-      const {cardId} = req.body;
+      const {cardsRadio} = req.body;
       const user = process.env.PGMSK;
       const password = "";
   
@@ -650,24 +665,24 @@ export default class CheckoutController {
             plan_id: req.session.item.id,
             customer_id: req.session.customer.id,
             payment_method: "credit_card",
-            card_id: cardId,
-            installments: 1,
+            card_id: cardsRadio,
             split: {
               enabled: true,
               rules: botConfigs.split_rules,
             },
           };
   
-          await fetch("https://api.pagar.me/core/v5/subscriptions", {
+          const createSubscription = await fetch("https://api.pagar.me/core/v5/subscriptions", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
             },
             body: JSON.stringify(bodySubscriptionOrder),
-          }).then(async (resp) => {
-            const response = await resp.json();
-            if (resp.status === 200) {
+          });
+
+          if(createSubscription.status === 200){
+              const response = await createSubscription.json();
               const data = {
                 customer_chat_id: req.session.customer.code,
                 subscription_id: response.id,
@@ -675,16 +690,14 @@ export default class CheckoutController {
                 bot_name: req.session.botName,
               };
               axios.post(webhookURL, data);
-              res.render("checkout/success", {
-                item: req.session.item,
-                customer: req.session.customer
-              });
-            }
-            return;
-          });
+              return res.redirect("success");
+          }else{
+            throw new Error(await createSubscription.json());
+          }
         } catch (err) {
           console.log(err);
           res.render("checkout/review", {
+            reviewView: true,
             item: req.session.item,
             customer: req.session.customer,
             customerCards: req.session.customerCards,
@@ -704,7 +717,7 @@ export default class CheckoutController {
             items: [
               {
                 amount: req.session.item.amount,
-                description: "Pack",
+                description: req.session.item.name,
                 quantity: 1,
                 code: req.session.item.id,
               },
@@ -713,7 +726,7 @@ export default class CheckoutController {
               {
                 payment_method: "credit_card",
                 credit_card: {
-                  card_id: cardId
+                  card_id: cardsRadio
                 },
                 amount: req.session.item.amount,
                 split: {
@@ -724,34 +737,33 @@ export default class CheckoutController {
             ],
             closed: true,
           };
-  
-          await fetch("https://api.pagar.me/core/v5/orders", {
+
+          const buyPack = await fetch("https://api.pagar.me/core/v5/orders", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
             },
             body: JSON.stringify(bodyPackOrder),
-          }).then((resp) => {
-            if (resp.status === 200) {
+          });
+
+          if(buyPack.status === 200){
+              const response = await buyPack.json();
               const data = {
                 customer_chat_id: req.session.customer.code,
-                pack_id: req.session.item.id,
+                subscription_id: response.id,
                 type_item_bought: "pack",
                 bot_name: req.session.botName,
               };
               axios.post(webhookURL, data);
-              res.render("checkout/success", {
-                item: req.session.item,
-                customer: req.session.customer
-              });
-            }
-  
-            return
-          });
+              return res.redirect("success");
+          }else{
+            throw new Error(await buyPack.json());
+          }
         } catch (err) {
           console.log(err);
           return res.render("checkout/review", {
+            reviewView: true,
             item: req.session.item,
             customer: req.session.customer,
             customerCards: req.session.customerCards,
@@ -827,6 +839,7 @@ export default class CheckoutController {
       req.session.save();
 
       return res.render("checkout/review", {
+        reviewView: true,
         item: req.session.item,
         customer: req.session.customer,
         customerCards: result.data,
@@ -843,6 +856,7 @@ export default class CheckoutController {
       if(err.result.message === 'This card can not be deleted. Please cancel all active subscriptions on this card to continue.') errMessage = "O cartão não pode ser deletado. Por favor cancele primerio todas as assinaturas que estão ativas nele."
 
       return res.render("checkout/review", {
+        reviewView: true,
         item: req.session.item,
         customer: req.session.customer,
         customerCards: req.session.customerCards,
