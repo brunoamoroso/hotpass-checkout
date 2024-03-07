@@ -410,8 +410,8 @@ export default class CheckoutController {
               };
 
               const qrCode = {
-                code: response.charges[0].lastTransaction.qrCode,
-                img: response.charges[0].lastTransaction.qrCodeUrl
+                code: response.charges[0].last_transaction.qr_code,
+                img: response.charges[0].last_transaction.qr_code_url
               }
 
               req.session.qrCode = qrCode;
