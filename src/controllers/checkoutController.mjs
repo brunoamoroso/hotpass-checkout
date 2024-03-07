@@ -584,6 +584,8 @@ export default class CheckoutController {
               type_item_bought: "subscription",
               bot_name: req.session.botName,
             };
+
+            console.log(data);
             axios.post(webhookURL, data).catch(err => {
               console.log(err);
             });
