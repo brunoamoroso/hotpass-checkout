@@ -367,7 +367,8 @@ export default class CheckoutController {
                     split: botConfigs.split_rules,
                   }
                 }],
-                closed: true
+                closed: true,
+                metadata: {}
               };
 
             const createPixOrder = await fetch("https://api.pagar.me/core/v5/orders", {
@@ -383,7 +384,7 @@ export default class CheckoutController {
             
             const response = await createPixOrder.json();
 
-            req.session.orderId = result.id;
+            req.session.orderId = response.id;
             req.session.save();
             
             if(response.status === 'pending'){
