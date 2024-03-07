@@ -12,13 +12,15 @@ import { configDotenv } from "dotenv";
 import { getModelByTenant } from "../utils/tenantUtils.mjs";
 import packSchema from "../schemas/Pack.mjs";
 import botConfigSchema from "../schemas/BotConfig.mjs";
+import mongoose from "mongoose";
 
 configDotenv();
 
 export default class CheckoutController {
   static async identify(req, res) {
     const userId = req.params.id;
-    const itemId = req.params.itemId;
+    let itemId = req.params.itemId;
+
     let customerExists = false;
     let item = {};
     const priceFormat = new Intl.NumberFormat("pt-br", {
@@ -81,7 +83,7 @@ export default class CheckoutController {
         const pack = await Packs.findById(itemId).lean();
 
         item = {
-          id: pack._id,
+          id: pack._id.toString(),
           name: pack.title,
           price: priceFormat.format(pack.price / 100),
           amount: pack.price,
