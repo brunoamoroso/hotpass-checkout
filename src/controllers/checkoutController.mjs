@@ -360,10 +360,7 @@ export default class CheckoutController {
                     }]
                   }
                 }],
-                split: {
-                  enabled: true,
-                  rules: botConfigs.split_rules
-                },
+                split: botConfigs.split_rules,
                 closed: true
               };
 
