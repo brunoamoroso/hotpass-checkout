@@ -364,7 +364,10 @@ export default class CheckoutController {
                       value: item.amount
                     }],
                     amount: item.amount,
-                    split: botConfigs.split_rules,
+                    split: {
+                      enabled: true,
+                      rules: botConfigs.split_rules,
+                    },
                   }
                 }],
                 closed: true,
