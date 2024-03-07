@@ -319,7 +319,7 @@ export default class CheckoutController {
       },
       step3: {
         status: "active",
-        label: "3",
+        label: '<i class="bi bi-check-lg"></i>',
       },
       step4: {
         status: "",
