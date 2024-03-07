@@ -27,29 +27,6 @@
       
       paymentText.innerText = 'Efetuando Compra...';
       spinner.style.display = 'inline-flex';
-
-      const cardsRadio = document.querySelector('input[name="cardsRadio"]:checked') !== null;
-
-      if(cardsRadio){
-        const card = cardsRadio.value;
-
-        const requestBody = JSON.stringify({cardId: card});
-
-        await fetch('{{dynamicURL}}/checkout/confirmPayment', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          mode: "cors",
-          body: requestBody
-        }).then(response => {
-          if(response.status === 200){
-            window.location.href = '{{dynamicURL}}/checkout/success';
-          }
-        }).catch(err => {
-          console.log(err)
-        });
-      }
     }
   </script>
   <body>
@@ -98,26 +75,63 @@
 
             <div class="col">
               <div class="row flex-column-reverse flex-md-row">
+                {{#if reviewView}}
+                <div class="col">
+                  <form action="/checkout/confirmPayment" method="post">
+                      <div class="row">
+                        {{{body}}}
+                        <div class="col-xs-12 col-md-5 pb-3 pb-md-0">
+                          <div class="box">
+                            <aside>
+                              <h3>Pedido</h3>
+                              <div>
+                                <div class="order-item d-flex justify-content-between">
+                                  <span class="order-item-name">{{item.name}}</span>
+                                  <span class="order-item-price">{{item.price}}</span>
+                                </div>
+                                <hr />
+                                <div class="order-total d-flex justify-content-between">
+                                  <span class="order-total-title">Total</span>
+                                  <span class="order-total-price">{{item.price}}</span>
+                                </div>
+                              </div>
 
-                {{{body}}}
-
-                <div class="col-xs-12 col-md-5 pb-3 pb-md-0">
-                  <div class="box">
-                    <aside>
-                      <h3>Pedido</h3>
-                      <div>
-                        <div class="order-item d-flex justify-content-between">
-                          <span class="order-item-name">{{item.name}}</span>
-                          <span class="order-item-price">{{item.price}}</span>
-                        </div>
-                        <hr />
-                        <div class="order-total d-flex justify-content-between">
-                          <span class="order-total-title">Total</span>
-                          <span class="order-total-price">{{item.price}}</span>
+                              {{#if customerExists}}
+                                <div class="d-grid pt-5">
+                                  <button class="btn btn-primary" onclick="handleReviewSubmit()">
+                                    <div id="payment-spinner" style="width: 1rem; height: 1rem; border-width: 0.18rem; display: none;" class="spinner-border me-2" role="status">
+                                    </div>
+                                    <span id="payment-text">
+                                      Confirmar Compra
+                                    </span>
+                                  </button>
+                                </div>
+                              {{/if}}
+                            </aside>
+                          </div>
                         </div>
                       </div>
+                    </form>
+                </div>
+                  {{else}}
+                  {{{body}}}
+                  <div class="col-xs-12 col-md-5 pb-3 pb-md-0">
+                    <div class="box">
+                      <aside>
+                        <h3>Pedido</h3>
+                        <div>
+                          <div class="order-item d-flex justify-content-between">
+                            <span class="order-item-name">{{item.name}}</span>
+                            <span class="order-item-price">{{item.price}}</span>
+                          </div>
+                          <hr />
+                          <div class="order-total d-flex justify-content-between">
+                            <span class="order-total-title">Total</span>
+                            <span class="order-total-price">{{item.price}}</span>
+                          </div>
+                        </div>
 
-                      {{#if customerExists}}
+                        {{#if customerExists}}
                           <div class="d-grid pt-5">
                             <button class="btn btn-primary" onclick="handleReviewSubmit()">
                               <div id="payment-spinner" style="width: 1rem; height: 1rem; border-width: 0.18rem; display: none;" class="spinner-border me-2" role="status">
@@ -127,11 +141,11 @@
                               </span>
                             </button>
                           </div>
-                      {{/if}}
-                    </aside>
+                        {{/if}}
+                      </aside>
+                    </div>
                   </div>
-                </div>
-
+                  {{/if}}
               </div>
             </div>
 
