@@ -568,7 +568,7 @@ export default class CheckoutController {
       botConfigSchema
     );
     const botConfigs = await BotConfigsModel.findOne().lean();
-    const webhookURL = process.env.BOTS_DOMAIN +"/"+ req.session.botName;
+    const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
 
     if(req.session.paymentType === "pix"){
       try {
@@ -584,7 +584,9 @@ export default class CheckoutController {
               type_item_bought: "subscription",
               bot_name: req.session.botName,
             };
-            axios.post(webhookURL, data);
+            axios.post(webhookURL, data).catch(err => {
+              console.log(err);
+            });
             return res.redirect("success");
           }
 
