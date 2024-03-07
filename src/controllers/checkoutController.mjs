@@ -12,13 +12,15 @@ import { configDotenv } from "dotenv";
 import { getModelByTenant } from "../utils/tenantUtils.mjs";
 import packSchema from "../schemas/Pack.mjs";
 import botConfigSchema from "../schemas/BotConfig.mjs";
+import mongoose from "mongoose";
 
 configDotenv();
 
 export default class CheckoutController {
   static async identify(req, res) {
     const userId = req.params.id;
-    const itemId = req.params.itemId;
+    let itemId = req.params.itemId;
+
     let customerExists = false;
     let item = {};
     const priceFormat = new Intl.NumberFormat("pt-br", {
@@ -81,7 +83,7 @@ export default class CheckoutController {
         const pack = await Packs.findById(itemId).lean();
 
         item = {
-          id: pack._id,
+          id: pack._id.toString(),
           name: pack.title,
           price: priceFormat.format(pack.price / 100),
           amount: pack.price,
@@ -308,6 +310,9 @@ export default class CheckoutController {
 
   static async choosePaymentPost(req, res){
     const { paymentMethods } = req.body;
+    const user = process.env.PGMSK;
+    const password = "";
+
     const stepper = {
       step1: {
         status: "done",
@@ -349,28 +354,39 @@ export default class CheckoutController {
                   category: item.type,
                   quantity: 1,
                 }],
-                customer: customer,
+                customer_id: customer.id,
                 payments: [{
-                  paymentMethod: "pix",
+                  payment_method: "pix",
                   pix: {
-                    expiresIn: 900,
-                    additionalInformation: [{
+                    expires_in: 900,
+                    additional_information: [{
                       name: item.name,
-                      value: item.amount.toString() 
-                    }]
+                      value: item.amount
+                    }],
+                    amount: item.amount,
+                    split: botConfigs.split_rules,
                   }
                 }],
-                split: botConfigs.split_rules,
                 closed: true
               };
 
-            const orderController = new OrdersController(client);
-            const {result} = await orderController.createOrder(bodyPixOrder);
+            const createPixOrder = await fetch("https://api.pagar.me/core/v5/orders", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+                },
+                body: JSON.stringify(bodyPixOrder),
+              }).catch(err => {
+                console.log(err);
+              });
+            
+            const response = await createPixOrder.json();
 
             req.session.orderId = result.id;
             req.session.save();
             
-            if(result.status === 'pending'){
+            if(response.status === 'pending'){
               const stepper = {
                 step1: {
                   status: "done",
@@ -584,7 +600,11 @@ export default class CheckoutController {
               type_item_bought: "subscription",
               bot_name: req.session.botName,
             };
-            axios.post(webhookURL, data);
+
+            console.log(data);
+            axios.post(webhookURL, data).catch(err => {
+              console.log(err);
+            });
             return res.redirect("success");
           }
 
@@ -679,16 +699,20 @@ export default class CheckoutController {
       }
   
       if (req.session.item.type === "pack") {
+        const item = req.session.item;
+        let customer = req.session.customer;
+
         try {
           const bodyPackOrder = {
-            code: req.session.customer.id,
-            customer_id: req.session.customer.id,
+            code: item.id,
+            customer_id: customer.id,
             items: [
               {
-                amount: req.session.item.amount,
-                description: req.session.item.name,
+                amount: item.amount,
+                description: item.name,
                 quantity: 1,
-                code: req.session.item.id,
+                code: item.id,
+                category: "pack",
               },
             ],
             payments: [
@@ -697,11 +721,8 @@ export default class CheckoutController {
                 credit_card: {
                   card_id: cardsRadio
                 },
-                amount: req.session.item.amount,
-                split: {
-                  enabled:true,
-                  rules: botConfigs.split_rules
-                },
+                amount: item.amount,
+                split: botConfigs.split_rules
               },
             ],
             closed: true,
@@ -714,21 +735,25 @@ export default class CheckoutController {
               Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
             },
             body: JSON.stringify(bodyPackOrder),
+          }).catch(err => {
+            return err.json();
           });
 
-          if(buyPack.status === 200){
-              const response = await buyPack.json();
+          const response = await buyPack.json();
+          console.log(response);
+
+          if(response.status === 'paid'){
               const data = {
-                customer_chat_id: req.session.customer.code,
-                subscription_id: response.id,
+                customer_chat_id: customer.code,
+                pack_id: item.id,
                 type_item_bought: "pack",
                 bot_name: req.session.botName,
               };
               axios.post(webhookURL, data);
               return res.redirect("success");
-          }else{
-            throw new Error(await buyPack.json());
           }
+
+          throw new Error(response);
         } catch (err) {
           console.log(err);
           return res.render("checkout/review", {
