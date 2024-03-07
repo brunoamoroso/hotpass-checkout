@@ -582,15 +582,13 @@ export default class CheckoutController {
           if(req.session.item.type === "subscription"){
             const data = {
               customer_chat_id: req.session.customer.code,
-              subscription_id: response.id,
+              plan_id: req.session.item.id,
+              order_id: result.id,
               type_item_bought: "subscription",
               bot_name: req.session.botName,
             };
             axios.post(webhookURL, data);
-            res.render("checkout/success", {
-              item: req.session.item,
-              customer: req.session.customer
-            });
+            return res.redirect("success");
           }
 
           if(req.session.item.type === "pack"){
@@ -601,10 +599,7 @@ export default class CheckoutController {
               bot_name: req.session.botName,
             };
             axios.post(webhookURL, data);
-            res.render("checkout/success", {
-              item: req.session.item,
-              customer: req.session.customer
-            });
+            return res.redirect("success");
           }
         }
 
