@@ -136,11 +136,11 @@ export default class CheckoutController {
             label: '<i class="bi bi-check-lg"></i>',
           },
           step3: {
-            status: "done",
-            label: '<i class="bi bi-check-lg"></i>',
+            status: "active",
+            label: '3',
           },
           step4: {
-            status: "active",
+            status: "",
             label: "4",
           },
         };
@@ -323,11 +323,11 @@ export default class CheckoutController {
         label: '<i class="bi bi-check-lg"></i>',
       },
       step3: {
-        status: "active",
+        status: "done",
         label: '<i class="bi bi-check-lg"></i>',
       },
       step4: {
-        status: "",
+        status: "active",
         label: "4",
       },
     };
@@ -365,7 +365,7 @@ export default class CheckoutController {
                     }],
                     amount: item.amount,
                   },
-                  // split: botConfigs.split_rules,
+                  split: botConfigs.split_rules,
                 }],
                 closed: true,
                 metadata: {}
@@ -604,7 +604,6 @@ export default class CheckoutController {
               order_id: result.id,
               type_item_bought: "subscription",
               bot_name: req.session.botName,
-              payment_type: "pix",
             };
 
             console.log(data);
@@ -620,7 +619,6 @@ export default class CheckoutController {
               pack_id: req.session.item.id,
               type_item_bought: "pack",
               bot_name: req.session.botName,
-              payment_type: "pix",
             };
             axios.post(webhookURL, data);
             return res.redirect("success");
@@ -684,7 +682,6 @@ export default class CheckoutController {
                 subscription_id: response.id,
                 type_item_bought: "subscription",
                 bot_name: req.session.botName,
-                payment_type: "credit_card",
               };
               axios.post(webhookURL, data);
               return res.redirect("success");
@@ -756,7 +753,6 @@ export default class CheckoutController {
                 pack_id: item.id,
                 type_item_bought: "pack",
                 bot_name: req.session.botName,
-                payment_type: "credit_card",
               };
               axios.post(webhookURL, data);
               return res.redirect("success");
