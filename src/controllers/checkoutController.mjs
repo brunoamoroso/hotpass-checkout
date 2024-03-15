@@ -363,16 +363,13 @@ export default class CheckoutController {
                       name: item.name,
                       value: item.amount
                     }],
-                    amount: item.amount,
                   },
                   split: botConfigs.split_rules,
                 }],
                 closed: true,
                 metadata: {}
               };
-
-              console.log(bodyPixOrder);
-
+              
             const createPixOrder = await fetch("https://api.pagar.me/core/v5/orders", {
                 method: "POST",
                 headers: {
@@ -383,6 +380,7 @@ export default class CheckoutController {
               }).catch(err => {
                 console.log(err);
               });
+
             
             const response = await createPixOrder.json();
 
