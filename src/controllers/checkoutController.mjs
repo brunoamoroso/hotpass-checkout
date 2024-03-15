@@ -369,7 +369,9 @@ export default class CheckoutController {
                 closed: true,
                 metadata: {}
               };
-              
+
+            console.dir(bodyPixOrder, { depth: null});
+
             const createPixOrder = await fetch("https://api.pagar.me/core/v5/orders", {
                 method: "POST",
                 headers: {
@@ -384,7 +386,7 @@ export default class CheckoutController {
             
             const response = await createPixOrder.json();
 
-            console.log(response);
+            console.dir(response, {depth: null});
 
             req.session.orderId = response.id;
             req.session.save();
