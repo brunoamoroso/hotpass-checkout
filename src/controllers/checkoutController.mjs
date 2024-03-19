@@ -12,6 +12,7 @@ import { configDotenv } from "dotenv";
 import { getModelByTenant } from "../utils/tenantUtils.mjs";
 import packSchema from "../schemas/Pack.mjs";
 import botConfigSchema from "../schemas/BotConfig.mjs";
+import priceFormat from "../utils/priceFormat.mjs";
 
 configDotenv();
 
@@ -22,11 +23,6 @@ export default class CheckoutController {
 
     let customerExists = false;
     let item = {};
-
-    const priceFormat = new Intl.NumberFormat("pt-br", {
-      style: "currency",
-      currency: "BRL",
-    });
 
     let stepper = {
       step1: {
@@ -59,7 +55,7 @@ export default class CheckoutController {
         item = {
           id: result.id,
           name: result.name,
-          price: priceFormat.format(result.items[0].pricingScheme.price / 100),
+          price: priceFormat(result.items[0].pricingScheme.price),
           amount: result.items[0].pricingScheme.price,
           type: "subscription",
         };
