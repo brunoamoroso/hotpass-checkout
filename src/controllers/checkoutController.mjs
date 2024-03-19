@@ -12,7 +12,6 @@ import { configDotenv } from "dotenv";
 import { getModelByTenant } from "../utils/tenantUtils.mjs";
 import packSchema from "../schemas/Pack.mjs";
 import botConfigSchema from "../schemas/BotConfig.mjs";
-import mongoose from "mongoose";
 
 configDotenv();
 
@@ -23,6 +22,7 @@ export default class CheckoutController {
 
     let customerExists = false;
     let item = {};
+
     const priceFormat = new Intl.NumberFormat("pt-br", {
       style: "currency",
       currency: "BRL",
@@ -31,7 +31,7 @@ export default class CheckoutController {
     let stepper = {
       step1: {
         status: "active",
-        label: '1',
+        label: "1",
       },
       step2: {
         status: "",
@@ -99,89 +99,81 @@ export default class CheckoutController {
 
     try {
       const customerController = new CustomersController(client);
-      const { result, ...httpResponse } = await customerController.getCustomers(
+      const { result: customerResult} = await customerController.getCustomers(
         undefined,
         undefined,
         undefined,
         undefined,
         undefined,
-        userId,
+        req.session.userId,
         undefined
       );
 
-      if(result.data.length === 0){
+      if (customerResult.data.length === 0) {
         res.render("checkout/identify", { item, stepper });
         return;
       }
 
-      req.session.customer = result.data[0];
+      req.session.customer = customerResult.data[0];
       req.session.save();
 
-      try {
-        const customerController = new CustomersController(client);
-        const { result, ...httpResponse } = await customerController.getCards(
-          req.session.customer.id
-        );
+      const { result: cardsResult } = await customerController.getCards(
+        req.session.customer.id
+      );
 
-        req.session.customerCards = result.data;
-        req.session.save();
-        customerExists = true;
-        stepper = {
-          step1: {
-            status: "done",
-            label: '<i class="bi bi-check-lg"></i>',
+      customerExists = true;
+      stepper = {
+        step1: {
+          status: "done",
+          label: '<i class="bi bi-check-lg"></i>',
+        },
+        step2: {
+          status: "done",
+          label: '<i class="bi bi-check-lg"></i>',
+        },
+        step3: {
+          status: "active",
+          label: '3',
+        },
+        step4: {
+          status: "",
+          label: "4",
+        },
+      };
+
+      const customerCards = cardsResult.data.forEach((card) => {
+        card.customerId = req.session.customer.id;
+        return card;
+      });
+      req.session.customerCards = customerCards;
+      req.session.save();
+
+      if (customerExists) {
+        const paymentTypes = [
+          {
+            icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
+            name: "Pix",
+            type: "pix"
           },
-          step2: {
-            status: "done",
-            label: '<i class="bi bi-check-lg"></i>',
-          },
-          step3: {
-            status: "active",
-            label: '3',
-          },
-          step4: {
-            status: "",
-            label: "4",
-          },
-        };
-      } catch (err) {
-        if (err instanceof ApiError) {
-          console.log(err);
-          return;
-        }
+          {
+            icon: '<i class="bi bi-credit-card-fill"></i>',
+            name: "Cartão de Crédito",
+            type: "credit_card",
+          }
+        ];
+
+        res.render('checkout/choosePayment', {
+          item,
+          customer: req.session.customer,
+          customerCards: req.session.customerCards,
+          customerExists,
+          stepper,
+          paymentTypes
+        });
       }
+
     } catch (err) {
       console.log(err);
-    }
-
-
-    let customerCards = req.session.customerCards;
-    customerCards.forEach((card) => {
-      card.customerId = req.session.customer.id;
-      return card;
-    });
-    req.session.customerCards = customerCards;
-    req.session.save();
-
-    if (customerExists) {
-      const paymentTypes = [
-        {
-          icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
-          name: "Pix",
-          type: "pix"
-        },
-        {
-          icon: '<i class="bi bi-credit-card-fill"></i>',
-          name: "Cartão de Crédito",
-          type: "credit_card",
-        }
-      ];
-
-      res.render('checkout/choosePayment', {
-        item,
-        stepper,
-        paymentTypes
-      })
     }
   }
 
@@ -260,7 +252,7 @@ export default class CheckoutController {
     const { zipcode, city, uf, neighborhood, street, number, complement } =
       req.body;
     let customer = req.session.customer;
-    
+
     customer.address = {
       line1: street.concat(", ", neighborhood, ", ", number),
       line2: complement,
@@ -308,10 +300,8 @@ export default class CheckoutController {
     }
   }
 
-  static async choosePaymentPost(req, res){
-    const { paymentMethods } = req.body;
-    const user = process.env.PGMSK;
-    const password = "";
+  static async choosePaymentPost(req, res) {
+    const {choosePaymentRadio} = req.body || {};
 
     const stepper = {
       step1: {
@@ -332,150 +322,93 @@ export default class CheckoutController {
       },
     };
 
-    switch (paymentMethods){
+    switch (choosePaymentRadio){
       case "pix":
-          try{
-            req.session.paymentType = "pix";
-            req.session.save();
-            const item = req.session.item;
+        try{
+          const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
+          const botConfigs = await botConfigsModel.findOne().lean();
 
-            const customer = req.session.customer;
-            customer.metadata = {};
-
-            const BotConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
-            const botConfigs = await BotConfigsModel.findOne().lean();
-
-            const bodyPixOrder = {
-                code: customer.id,
-                items: [{
-                  code: item.id,
-                  amount: item.amount,
-                  description: item.name,
-                  category: item.type,
-                  quantity: 1,
-                }],
-                customer_id: customer.id,
-                payments: [{
-                  payment_method: "pix",
-                  pix: {
-                    expires_in: 900,
-                    additional_information: [{
-                      name: item.name,
-                      value: item.amount
-                    }],
-                  },
-                  split: botConfigs.split_rules,
-                }],
-                closed: true,
-                metadata: {}
-              };
-
-            console.dir(bodyPixOrder, { depth: null});
-
-            const createPixOrder = await fetch("https://api.pagar.me/core/v5/orders", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
-                },
-                body: JSON.stringify(bodyPixOrder),
-              }).catch(err => {
-                console.log(err);
-              });
-
-            
-            const response = await createPixOrder.json();
-
-            console.dir(response, {depth: null});
-
-            req.session.orderId = response.id;
-            req.session.save();
-            
-            if(response.status === 'pending'){
-              const stepper = {
-                step1: {
-                  status: "done",
-                  label: '<i class="bi bi-check-lg"></i>',
-                },
-                step2: {
-                  status: "done",
-                  label: '<i class="bi bi-check-lg"></i>',
-                },
-                step3: {
-                  status: "done",
-                  label: '<i class="bi bi-check-lg"></i>',
-                },
-                step4: {
-                  status: "active",
-                  label: "4",
-                },
-              };
-
-              const qrCode = {
-                code: response.charges[0].last_transaction.qr_code,
-                img: response.charges[0].last_transaction.qr_code_url
-              }
-
-              req.session.qrCode = qrCode;
-              req.session.save();
-
-
-            return res.render("checkout/review", {
-                reviewView: true,
-                item: item,
-                customer: customer,
-                qrCode,
-                customerExists: true,
-                stepper,
-                dynamicURL: process.env.CHECKOUT_DOMAIN
-              });
+          console.log(botConfigs);
+          const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
+            return {
+              amount: rule.amount,
+              type: rule.type,
+              recipientId: rule.recipient_id,
+              options: rule.options
             }
-          }catch(err){
-            console.log(err);
-            const paymentTypes = [
+          });
+
+          req.session.customer.metadata = {};
+
+          const bodyPixOrder = {
+            code: req.session.item.id,
+            items: [
               {
-                icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
-                name: "Pix",
-                type: "pix"
+                amount: req.session.item.amount,
+                description: req.session.item.name,
+                quantity: 1,
+                category: req.session.item.type,
+                code: req.session.item.id
+              }
+            ],
+            customer: req.session.customer,
+            payments: [{
+              paymentMethod: "pix",
+              pix: {
+                expiresIn: "900",
+                additionalInformation: [
+                  {
+                    name: req.session.item.name,
+                    value: req.session.item.amount.toString()
+                  }
+                ]
               },
-              {
-                icon: '<i class="bi bi-credit-card-fill"></i>',
-                name: "Cartão de Crédito",
-                type: "credit_card",
-              }
-            ];
-
-            const alertMessage = {
-              type: 'danger',
-              message: 'Ocorreu um erro ao tentar gerar o pix de pagamento, por favor utilize o cartão de crédito como método de pagamento ou avise a dona do bot.'
-            }
-
-            return res.render("checkout/choosePayment", { paymentTypes, item: req.session.item, stepper, alertMessage });
+              split: adjustedSplitRules
+            }],
+            closed: true
           }
+
+          const ordersController = new OrdersController(client);
+          const {result} = await ordersController.createOrder(bodyPixOrder);
+
+          console.log(result);
+
+          res.render("checkout/review", {
+            item: req.session.item,
+            customer: req.session.customer,
+            customerExists: true,
+            stepper,
+            dynamicURL: process.env.CHECKOUT_DOMAIN,
+          });
+          return;
+        }catch(err){
+          console.log(err)
+        }
         break;
 
       case "credit_card":
-          req.session.paymentType = "credit_card";
-          req.session.save();
+        console.log(req.session.customerCards);
+          try{ 
+            if(req.session.customerCards){
+                res.render("checkout/review", {
+                  item: req.session.item,
+                  customer: req.session.customer,
+                  customerCards: req.session.customerCards,
+                  customerExists: true,
+                  stepper,
+                  dynamicURL: process.env.CHECKOUT_DOMAIN,
+                });
+                return;
+            }
 
-          if(req.session.customerCards){
-            return res.render("checkout/review", {
-              reviewView: true,
-              item: req.session.item,
-              customer: req.session.customer,
-              customerCards: req.session.customerCards,
-              customerExists: true,
-              stepper,
-              dynamicURL: process.env.CHECKOUT_DOMAIN
-            });
+            res.redirect(`newCard/${req.session.customer.id}`);
+          }catch(err){
+            console.log(err);
           }
-
-          res.redirect(`newCard/${req.session.customer.id}`);
         break;
     }
   }
 
-  // the create empty create new card for a new user
   static async createCardPost(req, res) {
     const stepper = {
       step1: {
@@ -499,10 +432,9 @@ export default class CheckoutController {
     if(req.session.customer.document === undefined){
       try{
         const customerController = new CustomersController(client);
-        const { result, ...httpResponse } = await customerController.getCustomer(
-          req.session.customer.id,
-        );
-  
+        const { result, ...httpResponse } =
+          await customerController.getCustomer(req.session.customer.id);
+
         req.session.customer = result;
         req.session.save();
       }catch(err){
@@ -526,10 +458,13 @@ export default class CheckoutController {
       };
 
       const customerController = new CustomersController(client);
-      const {result, ...httpResponse} = await customerController.createCard(req.session.customer.id, bodyCreateCard);
-        
+      const { result, ...httpResponse } = await customerController.createCard(
+        req.session.customer.id,
+        bodyCreateCard
+      );
+
       let customerCards;
-      try{
+      try {
         const customerController = new CustomersController(client);
         const { result, ...httpResponse } = await customerController.getCards(
           req.session.customer.id
@@ -801,8 +736,8 @@ export default class CheckoutController {
     res.render('checkout/newCard', {item, stepper});
   }
 
-  static async deleteCard(req, res){
-    const {customerId, cardId} = req.params;
+  static async deleteCard(req, res) {
+    const { customerId, cardId } = req.params;
 
     const stepper = {
       step1: {
@@ -823,7 +758,7 @@ export default class CheckoutController {
       },
     };
 
-    try{
+    try {
       const customerController = new CustomersController(client);
       await customerController.deleteCard(customerId, cardId);
 
@@ -852,7 +787,12 @@ export default class CheckoutController {
       console.log(err);
       let errMessage = "Tivemos um problema ao excluir o seu cartão. Tente novamente mais tarde";
 
-      if(err.result.message === 'This card can not be deleted. Please cancel all active subscriptions on this card to continue.') errMessage = "O cartão não pode ser deletado. Por favor cancele primerio todas as assinaturas que estão ativas nele."
+      if (
+        err.result.message ===
+        "This card can not be deleted. Please cancel all active subscriptions on this card to continue."
+      )
+        errMessage =
+          "O cartão não pode ser deletado. Por favor cancele primerio todas as assinaturas que estão ativas nele.";
 
       return res.render("checkout/review", {
         reviewView: true,
@@ -862,12 +802,12 @@ export default class CheckoutController {
         customerExists: true,
         stepper,
         dynamicURL: process.env.CHECKOUT_DOMAIN,
-        alertMessage: {type: "danger", message: errMessage}
+        alertMessage: { type: "danger", message: errMessage },
       });
     }
   }
 
-  static success (req, res){
-    return res.render('checkout/success', {layout: false});
+  static success(req, res) {
+    return res.render("checkout/success", { layout: false });
   }
 }
