@@ -81,7 +81,7 @@ export default class CheckoutController {
         item = {
           id: pack._id.toString(),
           name: pack.title,
-          price: priceFormat.format(pack.price / 100),
+          price: priceFormat(pack.price),
           amount: pack.price,
           type: "pack",
         };
@@ -104,7 +104,8 @@ export default class CheckoutController {
         req.session.userId,
         undefined
       );
-
+      
+      // if customer doesn't exist
       if (customerResult.data.length === 0) {
         res.render("checkout/identify", { item, stepper });
         return;
@@ -112,7 +113,7 @@ export default class CheckoutController {
 
       req.session.customer = customerResult.data[0];
       req.session.save();
-
+    
       const { result: cardsResult } = await customerController.getCards(
         req.session.customer.id
       );
@@ -141,6 +142,7 @@ export default class CheckoutController {
         card.customerId = req.session.customer.id;
         return card;
       });
+
       req.session.customerCards = customerCards;
       req.session.save();
 
