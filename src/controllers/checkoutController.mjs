@@ -160,9 +160,21 @@ export default class CheckoutController {
         }
       }
 
-      // const {result: PixOrderResult} = await ordersController.getOrder(paidOrdersResult.data[0].id);
+      // if there's a pending one it'll cancel
+      const {result: pendingOrders} = await ordersController.getOrders(
+        undefined,
+        undefined,
+        item.id,
+        "pending",
+        createdSinceDate.toISOString(),
+        undefined,
+        customerResult.data[0].id,
+      );
 
-      // console.dir(PixOrderResult, {depth: null});
+      pendingOrders.forEach(async (order) => {
+        const ordersController = new OrdersController(client);
+        await ordersController.closeOrder(order.id, {status: "canceled"})
+      });
     
       const { result: cardsResult } = await customerController.getCards(
         req.session.customer.id
