@@ -113,6 +113,56 @@ export default class CheckoutController {
 
       req.session.customer = customerResult.data[0];
       req.session.save();
+
+      // if customer has an order by Pix paid
+      const createdSinceDate = new Date();
+      createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 15);
+
+      // get all paid orders in the last 15 minutes, filter to check if one of them is equal with current plan or pack to confirm the payment and them workout the situation
+      const ordersController = new OrdersController(client);
+      const {result: paidOrdersResult} = await ordersController.getOrders(
+        undefined,
+        undefined,
+        item.id,
+        "paid",
+        createdSinceDate.toISOString(),
+        undefined,
+        customerResult.data[0].id,
+      );
+
+      // if paid we send the user directly to the success
+      const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+      if(paidOrdersResult.data.length > 0){
+        if(item.type === "subscription"){
+          const data = {
+            customer_chat_id: customerResult.data[0].code,
+            plan_id: customerResult.data[0].id,
+            order_id: paidOrdersResult.data[0].id,
+            type_item_bought: "subscription",
+            bot_name: req.params.botName,
+          };
+  
+          axios.post(webhookURL, data).catch(err => {
+            console.log(err);
+          });
+          return res.redirect("success");
+        }
+
+        if(item.type === "pack"){
+          const data = {
+            customer_chat_id: customerResult.data[0].code,
+            pack_id: item.id,
+            type_item_bought: "pack",
+            bot_name: req.params.botName,
+          };
+          axios.post(webhookURL, data);
+          return res.redirect("success");
+        }
+      }
+
+      // const {result: PixOrderResult} = await ordersController.getOrder(paidOrdersResult.data[0].id);
+
+      // console.dir(PixOrderResult, {depth: null});
     
       const { result: cardsResult } = await customerController.getCards(
         req.session.customer.id
@@ -539,7 +589,6 @@ export default class CheckoutController {
               bot_name: req.session.botName,
             };
 
-            console.log(data);
             axios.post(webhookURL, data).catch(err => {
               console.log(err);
             });
@@ -561,11 +610,12 @@ export default class CheckoutController {
         throw new Error("Pix not paid yet");  
       } catch (err) {
         console.log(err);
-        let alertMessage = {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
+        let alertMessage = {type: "danger", message: "Tivemos um problema ao processar o seu pagamento. Tente novamente mais tarde"}
 
         if(err.message === "Pix not paid yet"){
           alertMessage.message = "Não recebemos o seu pix ainda. Vá ao seu banco, efetue o pagamento e volte aqui para confirmar.";
         }
+
         res.render("checkout/review", {
           reviewView: true,
           item: req.session.item,
