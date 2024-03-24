@@ -139,7 +139,7 @@ export default class CheckoutController {
   static async checkPixPaid(req, res, next){
     // get all paid orders in the last 15 minutes, filter to check if one of them is equal with current plan or pack to confirm the payment and them workout the situation
     const createdSinceDate = new Date();
-    createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 30);
+    createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 15);
     
     const ordersController = new OrdersController(client);
     const {result: paidOrdersResult} = await ordersController.getOrders(
@@ -185,19 +185,23 @@ export default class CheckoutController {
     }
 
     // if there's a pending one it'll cancel
-    // const {result: pendingOrders} = await ordersController.getOrders(
-    //   undefined,
-    //   undefined,
-    //   req.session.item.id,
-    //   "pending",
-    //   createdSinceDate.toISOString(),
-    //   undefined,
-    //   req.session.customer.id,
-    // );
+    const {result: pendingOrders} = await ordersController.getOrders(
+      undefined,
+      undefined,
+      req.session.item.id,
+      "pending",
+      createdSinceDate.toISOString(),
+      undefined,
+      req.session.customer.id,
+    );
 
-    // pendingOrders.data.forEach(async (order) => {
+    // console.dir(pendingOrders, {depth: null});
+
+    // pendingOrders.data.forEach(async (order, i) => {
+    //   console.log(i);
     //   const ordersController = new OrdersController(client);
-    //   await ordersController.closeOrder(order.id, {status: "canceled"})
+    //   const {result} = await ordersController.closeOrder(order.id, {status: "canceled"});
+    //   console.dir(result, {depth: null})
     // });
     next();
   }
@@ -472,6 +476,7 @@ export default class CheckoutController {
           }).then(async resp => {
             return await resp.json();
           });
+
 
           const qrCode = {
             img: result.charges[0].last_transaction.qr_code_url,
