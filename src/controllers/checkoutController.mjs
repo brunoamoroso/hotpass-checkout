@@ -17,11 +17,15 @@ import priceFormat from "../utils/priceFormat.mjs";
 configDotenv();
 
 export default class CheckoutController {
-  static async identify(req, res) {
+  /**
+   * This route serves to identify if the user exists in the pagar.me platform. If not it'll start to create the customer there
+   */
+  static async identify(req, res, next) {
     const userId = req.params.id;
     let itemId = req.params.itemId;
 
     let customerExists = false;
+
     let item = {};
 
     let stepper = {
@@ -114,74 +118,87 @@ export default class CheckoutController {
       req.session.customer = customerResult.data[0];
       req.session.save();
 
-      // if customer has an order by Pix paid
-      const createdSinceDate = new Date();
-      createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 15);
+      next();
 
-      // get all paid orders in the last 15 minutes, filter to check if one of them is equal with current plan or pack to confirm the payment and them workout the situation
-      const ordersController = new OrdersController(client);
-      const {result: paidOrdersResult} = await ordersController.getOrders(
-        undefined,
-        undefined,
-        item.id,
-        "paid",
-        createdSinceDate.toISOString(),
-        undefined,
-        customerResult.data[0].id,
-      );
+    } catch (err) {
+      console.dir(err, {depth: null});
+    }
+  }
 
-      // if paid we send the user directly to the success
-      const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
-      if(paidOrdersResult.data.length > 0){
-        if(item.type === "subscription"){
-          const data = {
-            customer_chat_id: customerResult.data[0].code,
-            plan_id: customerResult.data[0].id,
-            order_id: paidOrdersResult.data[0].id,
-            type_item_bought: "subscription",
-            bot_name: req.params.botName,
-          };
-  
-          axios.post(webhookURL, data).catch(err => {
-            console.log(err);
-          });
-          return res.redirect("success");
-        }
+  /**
+   * 
+   * This is mostly to contour a problem with users reminding of click "Confirmar Compra" on the review page while paying by pix. So when a customer comeback and has generate a pix and paid in the last 15 minutes it'll check and lead the customer to the success page
+   */
+  static async checkPixPaid(req, res, next){
+    // get all paid orders in the last 15 minutes, filter to check if one of them is equal with current plan or pack to confirm the payment and them workout the situation
+    const createdSinceDate = new Date();
+    createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 15);
+    
+    const ordersController = new OrdersController(client);
+    const {result: paidOrdersResult} = await ordersController.getOrders(
+      undefined,
+      undefined,
+      req.session.item.id,
+      "paid",
+      createdSinceDate.toISOString(),
+      undefined,
+      req.session.customer.id,
+    );
 
-        if(item.type === "pack"){
-          const data = {
-            customer_chat_id: customerResult.data[0].code,
-            pack_id: item.id,
-            type_item_bought: "pack",
-            bot_name: req.params.botName,
-          };
-          axios.post(webhookURL, data);
-          return res.redirect("success");
-        }
+    // if paid we send the user directly to the success
+    const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+    if(paidOrdersResult.data.length > 0){
+      if(item.type === "subscription"){
+        const data = {
+          customer_chat_id: req.session.customer.code,
+          plan_id: req.session.customer.id,
+          order_id: paidOrdersResult.data[0].id,
+          type_item_bought: "subscription",
+          bot_name: req.session.botName,
+        };
+
+        axios.post(webhookURL, data).catch(err => {
+          console.dir(err, {depth: null});
+        });
+        return res.redirect("success");
       }
 
-      // if there's a pending one it'll cancel
-      const {result: pendingOrders} = await ordersController.getOrders(
-        undefined,
-        undefined,
-        item.id,
-        "pending",
-        createdSinceDate.toISOString(),
-        undefined,
-        customerResult.data[0].id,
-      );
+      if(item.type === "pack"){
+        const data = {
+          customer_chat_id: req.session.customer.code,
+          pack_id: req.session.item.id,
+          type_item_bought: "pack",
+          bot_name: req.session.botName,
+        };
+        axios.post(webhookURL, data);
+        return res.redirect("success");
+      }
+    }
 
-      pendingOrders.forEach(async (order) => {
-        const ordersController = new OrdersController(client);
-        await ordersController.closeOrder(order.id, {status: "canceled"})
-      });
-    
-      const { result: cardsResult } = await customerController.getCards(
-        req.session.customer.id
-      );
+    // if there's a pending one it'll cancel
+    // const {result: pendingOrders} = await ordersController.getOrders(
+    //   undefined,
+    //   undefined,
+    //   req.session.item.id,
+    //   "pending",
+    //   createdSinceDate.toISOString(),
+    //   undefined,
+    //   req.session.customer.id,
+    // );
 
-      customerExists = true;
-      stepper = {
+    // pendingOrders.data.forEach(async (order) => {
+    //   const ordersController = new OrdersController(client);
+    //   await ordersController.closeOrder(order.id, {status: "canceled"})
+    // });
+    next();
+  }
+
+  /**
+   * customerExists but hasn't paid a pix about this purchase yet, so the customer can choose a payment method
+   */
+  static async customerExists(req, res){
+    try{
+      const stepper = {
         step1: {
           status: "done",
           label: '<i class="bi bi-check-lg"></i>',
@@ -200,6 +217,11 @@ export default class CheckoutController {
         },
       };
 
+      const customerController = new CustomersController(client);
+      const { result: cardsResult } = await customerController.getCards(
+        req.session.customer.id
+      );
+
       const customerCards = cardsResult.data.forEach((card) => {
         card.customerId = req.session.customer.id;
         return card;
@@ -208,32 +230,28 @@ export default class CheckoutController {
       req.session.customerCards = customerCards;
       req.session.save();
 
-      if (customerExists) {
-        const paymentTypes = [
-          {
-            icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
-            name: "Pix",
-            type: "pix"
-          },
-          {
-            icon: '<i class="bi bi-credit-card-fill"></i>',
-            name: "Cartão de Crédito",
-            type: "credit_card",
-          }
-        ];
+      const paymentTypes = [
+        {
+          icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
+          name: "Pix",
+          type: "pix"
+        },
+        {
+          icon: '<i class="bi bi-credit-card-fill"></i>',
+          name: "Cartão de Crédito",
+          type: "credit_card",
+        }
+      ];
 
-        res.render('checkout/choosePayment', {
-          item,
-          customer: req.session.customer,
-          customerCards: req.session.customerCards,
-          customerExists,
-          stepper,
-          paymentTypes
-        });
-      }
-
-    } catch (err) {
-      console.log(err);
+      res.render('checkout/choosePayment', {
+        item: req.session.item,
+        customer: req.session.customer,
+        customerCards: req.session.customerCards,
+        stepper,
+        paymentTypes
+      });
+    }catch(err){
+      console.dir(err, {depth: null})
     }
   }
 
@@ -361,7 +379,7 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res) {
-    const {choosePaymentRadio} = req.body || {};
+    const {paymentMethods} = req.body || {};
 
     const stepper = {
       step1: {
@@ -382,19 +400,22 @@ export default class CheckoutController {
       },
     };
 
-    switch (choosePaymentRadio){
+    switch (paymentMethods){
       case "pix":
         try{
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
 
-          console.log(botConfigs);
           const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
             return {
               amount: rule.amount,
               type: rule.type,
               recipientId: rule.recipient_id,
-              options: rule.options
+              options: {
+                chargeProcessingFee: rule.options.charge_processing_fee,
+                chargeRemainderFee: rule.options.charge_remainder_fee,
+                liable: rule.options.liable
+              }
             }
           });
 
@@ -404,18 +425,18 @@ export default class CheckoutController {
             code: req.session.item.id,
             items: [
               {
+                code: req.session.item.id,
                 amount: req.session.item.amount,
                 description: req.session.item.name,
                 quantity: 1,
                 category: req.session.item.type,
-                code: req.session.item.id
               }
             ],
             customer: req.session.customer,
             payments: [{
               paymentMethod: "pix",
               pix: {
-                expiresIn: "900",
+                expiresIn: 900,
                 additionalInformation: [
                   {
                     name: req.session.item.name,
@@ -428,10 +449,12 @@ export default class CheckoutController {
             closed: true
           }
 
+          console.dir(bodyPixOrder, {depth:null});
+
           const ordersController = new OrdersController(client);
           const {result} = await ordersController.createOrder(bodyPixOrder);
 
-          console.log(result);
+          console.dir(result, {depth: null});
 
           res.render("checkout/review", {
             item: req.session.item,
