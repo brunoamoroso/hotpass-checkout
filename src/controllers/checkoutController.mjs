@@ -688,8 +688,6 @@ export default class CheckoutController {
 
     if(req.session.paymentType === "credit_card"){
       const {cardsRadio} = req.body;
-      const user = process.env.PGMSK;
-      const password = "";
   
       if (req.session.item.type === "subscription") {
         try {
@@ -709,7 +707,7 @@ export default class CheckoutController {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+              Authorization: CheckoutController.fetchAuthKey(),
             },
             body: JSON.stringify(bodySubscriptionOrder),
           });
@@ -776,7 +774,7 @@ export default class CheckoutController {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+              Authorization: CheckoutController.fetchAuthKey(),
             },
             body: JSON.stringify(bodyPackOrder),
           }).catch(err => {
