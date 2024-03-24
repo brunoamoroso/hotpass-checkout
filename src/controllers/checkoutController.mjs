@@ -17,6 +17,13 @@ import priceFormat from "../utils/priceFormat.mjs";
 configDotenv();
 
 export default class CheckoutController {
+
+  static fetchAuthKey(){
+    const user = process.env.PGMSK;
+    const password = "";
+    return `Basic ${base64.encode(`${user}:${password}`)}`;
+  }
+
   /**
    * This route serves to identify if the user exists in the pagar.me platform. If not it'll start to create the customer there
    */
@@ -406,20 +413,20 @@ export default class CheckoutController {
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
 
-          const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
-            return {
-              amount: rule.amount,
-              type: rule.type,
-              recipientId: rule.recipient_id,
-              options: {
-                chargeProcessingFee: rule.options.charge_processing_fee,
-                chargeRemainderFee: rule.options.charge_remainder_fee,
-                liable: rule.options.liable
-              }
-            }
-          });
+          // const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
+          //   return {
+          //     amount: rule.amount,
+          //     type: rule.type,
+          //     recipientId: rule.recipient_id,
+          //     options: {
+          //       chargeProcessingFee: rule.options.charge_processing_fee,
+          //       chargeRemainderFee: rule.options.charge_remainder_fee,
+          //       liable: rule.options.liable
+          //     }
+          //   }
+          // });
 
-          req.session.customer.metadata = {};
+          // req.session.customer.metadata = {};
 
           const bodyPixOrder = {
             code: req.session.item.id,
@@ -432,34 +439,48 @@ export default class CheckoutController {
                 category: req.session.item.type,
               }
             ],
-            customer: req.session.customer,
+            customer_id: req.session.customer.id,
             payments: [{
-              paymentMethod: "pix",
+              payment_method: "pix",
               pix: {
-                expiresIn: 900,
-                additionalInformation: [
+                expires_in: 900,
+                additional_information: [
                   {
                     name: req.session.item.name,
                     value: req.session.item.amount.toString()
                   }
                 ]
               },
-              split: adjustedSplitRules
+              split: botConfigs.split_rules
             }],
             closed: true
           }
 
-          console.dir(bodyPixOrder, {depth:null});
+          // console.dir(bodyPixOrder, {depth:null});
 
-          const ordersController = new OrdersController(client);
-          const {result} = await ordersController.createOrder(bodyPixOrder);
+          // const ordersController = new OrdersController(client);
+          // const {result} = await ordersController.createOrder(bodyPixOrder);
 
-          console.dir(result, {depth: null});
+          const result = await fetch("https://api.pagar.me/core/v5/orders", {
+            method: "POST",
+            headers:{
+              Authorization: CheckoutController.fetchAuthKey(),
+            },
+            body: JSON.stringify(bodyPixOrder)
+          }).then(async resp => {
+            return await resp.json();
+          });
+
+          const qrCode = {
+            img: result.charges[0].last_transaction.qr_code_url,
+            code: result.charges[0].last_transaction.qr_code
+          }
 
           res.render("checkout/review", {
             item: req.session.item,
             customer: req.session.customer,
             customerExists: true,
+            qrCode,
             stepper,
             dynamicURL: process.env.CHECKOUT_DOMAIN,
           });
