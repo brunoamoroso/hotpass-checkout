@@ -139,7 +139,7 @@ export default class CheckoutController {
   static async checkPixPaid(req, res, next){
     // get all paid orders in the last 15 minutes, filter to check if one of them is equal with current plan or pack to confirm the payment and them workout the situation
     const createdSinceDate = new Date();
-    createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 15);
+    createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 30);
     
     const ordersController = new OrdersController(client);
     const {result: paidOrdersResult} = await ordersController.getOrders(
@@ -163,6 +163,7 @@ export default class CheckoutController {
           order_id: paidOrdersResult.data[0].id,
           type_item_bought: "subscription",
           bot_name: req.session.botName,
+          payment_type: "pix"
         };
       }
 
@@ -172,6 +173,7 @@ export default class CheckoutController {
           pack_id: req.session.item.id,
           type_item_bought: "pack",
           bot_name: req.session.botName,
+          payment_type: "pix"
         };
       }
 
