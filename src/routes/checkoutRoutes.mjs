@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/deleteCard/:customerId/:cardId', CheckoutController.deleteCard);
 router.get('/newCard/:id', CheckoutController.newCard);
-router.get("/:botName/:id/:itemId", CheckoutController.identify);
+router.get("/:botName/:id/:itemId", CheckoutController.identify, CheckoutController.checkPixPaid, CheckoutController.customerExists);
 router.get("/success", CheckoutController.success);
 
 router.post('/identify', CheckoutController.identifyPost);

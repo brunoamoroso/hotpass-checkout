@@ -17,11 +17,22 @@ import priceFormat from "../utils/priceFormat.mjs";
 configDotenv();
 
 export default class CheckoutController {
-  static async identify(req, res) {
+
+  static fetchAuthKey(){
+    const user = process.env.PGMSK;
+    const password = "";
+    return `Basic ${base64.encode(`${user}:${password}`)}`;
+  }
+
+  /**
+   * This route serves to identify if the user exists in the pagar.me platform. If not it'll start to create the customer there
+   */
+  static async identify(req, res, next) {
     const userId = req.params.id;
     let itemId = req.params.itemId;
 
     let customerExists = false;
+
     let item = {};
 
     let stepper = {
@@ -113,13 +124,94 @@ export default class CheckoutController {
 
       req.session.customer = customerResult.data[0];
       req.session.save();
-    
-      const { result: cardsResult } = await customerController.getCards(
-        req.session.customer.id
-      );
 
-      customerExists = true;
-      stepper = {
+      next();
+
+    } catch (err) {
+      console.dir(err, {depth: null});
+    }
+  }
+
+  /**
+   * 
+   * This is mostly to contour a problem with users reminding of click "Confirmar Compra" on the review page while paying by pix. So when a customer comeback and has generate a pix and paid in the last 15 minutes it'll check and lead the customer to the success page
+   */
+  static async checkPixPaid(req, res, next){
+    // get all paid orders in the last 15 minutes, filter to check if one of them is equal with current plan or pack to confirm the payment and them workout the situation
+    const createdSinceDate = new Date();
+    createdSinceDate.setMinutes(createdSinceDate.getMinutes() - 15);
+    
+    const ordersController = new OrdersController(client);
+    const {result: paidOrdersResult} = await ordersController.getOrders(
+      undefined,
+      undefined,
+      req.session.item.id,
+      "paid",
+      createdSinceDate.toISOString(),
+      undefined,
+      req.session.customer.id,
+    );
+
+    // if paid we send the user directly to the success
+    const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+    let data = {};
+    if(paidOrdersResult.data.length > 0){
+      if(req.session.item.type === "subscription"){
+        data = {
+          customer_chat_id: req.session.customer.code,
+          plan_id: req.session.item.id,
+          order_id: paidOrdersResult.data[0].id,
+          type_item_bought: "subscription",
+          bot_name: req.session.botName,
+          payment_type: "pix"
+        };
+      }
+
+      if(req.session.item.type === "pack"){
+        data = {
+          customer_chat_id: req.session.customer.code,
+          pack_id: req.session.item.id,
+          type_item_bought: "pack",
+          bot_name: req.session.botName,
+          payment_type: "pix"
+        };
+      }
+
+      axios.post(webhookURL, data).catch(err => {
+        console.dir(err, {depth: null});
+      });
+      
+      return res.redirect("/checkout/success");
+    }
+
+    // if there's a pending one it'll cancel
+    const {result: pendingOrders} = await ordersController.getOrders(
+      undefined,
+      undefined,
+      req.session.item.id,
+      "pending",
+      createdSinceDate.toISOString(),
+      undefined,
+      req.session.customer.id,
+    );
+
+    // console.dir(pendingOrders, {depth: null});
+
+    // pendingOrders.data.forEach(async (order, i) => {
+    //   console.log(i);
+    //   const ordersController = new OrdersController(client);
+    //   const {result} = await ordersController.closeOrder(order.id, {status: "canceled"});
+    //   console.dir(result, {depth: null})
+    // });
+    next();
+  }
+
+  /**
+   * customerExists but hasn't paid a pix about this purchase yet, so the customer can choose a payment method
+   */
+  static async customerExists(req, res){
+    try{
+      const stepper = {
         step1: {
           status: "done",
           label: '<i class="bi bi-check-lg"></i>',
@@ -138,6 +230,11 @@ export default class CheckoutController {
         },
       };
 
+      const customerController = new CustomersController(client);
+      const { result: cardsResult } = await customerController.getCards(
+        req.session.customer.id
+      );
+
       const customerCards = cardsResult.data.forEach((card) => {
         card.customerId = req.session.customer.id;
         return card;
@@ -146,32 +243,28 @@ export default class CheckoutController {
       req.session.customerCards = customerCards;
       req.session.save();
 
-      if (customerExists) {
-        const paymentTypes = [
-          {
-            icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
-            name: "Pix",
-            type: "pix"
-          },
-          {
-            icon: '<i class="bi bi-credit-card-fill"></i>',
-            name: "Cartão de Crédito",
-            type: "credit_card",
-          }
-        ];
+      const paymentTypes = [
+        {
+          icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
+          name: "Pix",
+          type: "pix"
+        },
+        {
+          icon: '<i class="bi bi-credit-card-fill"></i>',
+          name: "Cartão de Crédito",
+          type: "credit_card",
+        }
+      ];
 
-        res.render('checkout/choosePayment', {
-          item,
-          customer: req.session.customer,
-          customerCards: req.session.customerCards,
-          customerExists,
-          stepper,
-          paymentTypes
-        });
-      }
-
-    } catch (err) {
-      console.log(err);
+      res.render('checkout/choosePayment', {
+        item: req.session.item,
+        customer: req.session.customer,
+        customerCards: req.session.customerCards,
+        stepper,
+        paymentTypes
+      });
+    }catch(err){
+      console.dir(err, {depth: null})
     }
   }
 
@@ -299,7 +392,7 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res) {
-    const {choosePaymentRadio} = req.body || {};
+    const {paymentMethods} = req.body || {};
 
     const stepper = {
       step1: {
@@ -320,61 +413,81 @@ export default class CheckoutController {
       },
     };
 
-    switch (choosePaymentRadio){
+    switch (paymentMethods){
       case "pix":
         try{
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
 
-          console.log(botConfigs);
-          const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
-            return {
-              amount: rule.amount,
-              type: rule.type,
-              recipientId: rule.recipient_id,
-              options: rule.options
-            }
-          });
+          // const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
+          //   return {
+          //     amount: rule.amount,
+          //     type: rule.type,
+          //     recipientId: rule.recipient_id,
+          //     options: {
+          //       chargeProcessingFee: rule.options.charge_processing_fee,
+          //       chargeRemainderFee: rule.options.charge_remainder_fee,
+          //       liable: rule.options.liable
+          //     }
+          //   }
+          // });
 
-          req.session.customer.metadata = {};
+          // req.session.customer.metadata = {};
 
           const bodyPixOrder = {
             code: req.session.item.id,
             items: [
               {
+                code: req.session.item.id,
                 amount: req.session.item.amount,
                 description: req.session.item.name,
                 quantity: 1,
                 category: req.session.item.type,
-                code: req.session.item.id
               }
             ],
-            customer: req.session.customer,
+            customer_id: req.session.customer.id,
             payments: [{
-              paymentMethod: "pix",
+              payment_method: "pix",
               pix: {
-                expiresIn: "900",
-                additionalInformation: [
+                expires_in: 900,
+                additional_information: [
                   {
                     name: req.session.item.name,
                     value: req.session.item.amount.toString()
                   }
                 ]
               },
-              split: adjustedSplitRules
+              split: botConfigs.split_rules
             }],
             closed: true
           }
 
-          const ordersController = new OrdersController(client);
-          const {result} = await ordersController.createOrder(bodyPixOrder);
+          // console.dir(bodyPixOrder, {depth:null});
 
-          console.log(result);
+          // const ordersController = new OrdersController(client);
+          // const {result} = await ordersController.createOrder(bodyPixOrder);
+
+          const result = await fetch("https://api.pagar.me/core/v5/orders", {
+            method: "POST",
+            headers:{
+              Authorization: CheckoutController.fetchAuthKey(),
+            },
+            body: JSON.stringify(bodyPixOrder)
+          }).then(async resp => {
+            return await resp.json();
+          });
+
+
+          const qrCode = {
+            img: result.charges[0].last_transaction.qr_code_url,
+            code: result.charges[0].last_transaction.qr_code
+          }
 
           res.render("checkout/review", {
             item: req.session.item,
             customer: req.session.customer,
             customerExists: true,
+            qrCode,
             stepper,
             dynamicURL: process.env.CHECKOUT_DOMAIN,
           });
@@ -539,7 +652,6 @@ export default class CheckoutController {
               bot_name: req.session.botName,
             };
 
-            console.log(data);
             axios.post(webhookURL, data).catch(err => {
               console.log(err);
             });
@@ -561,11 +673,12 @@ export default class CheckoutController {
         throw new Error("Pix not paid yet");  
       } catch (err) {
         console.log(err);
-        let alertMessage = {type: "danger", message: "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde"}
+        let alertMessage = {type: "danger", message: "Tivemos um problema ao processar o seu pagamento. Tente novamente mais tarde"}
 
         if(err.message === "Pix not paid yet"){
           alertMessage.message = "Não recebemos o seu pix ainda. Vá ao seu banco, efetue o pagamento e volte aqui para confirmar.";
         }
+
         res.render("checkout/review", {
           reviewView: true,
           item: req.session.item,
@@ -582,8 +695,6 @@ export default class CheckoutController {
 
     if(req.session.paymentType === "credit_card"){
       const {cardsRadio} = req.body;
-      const user = process.env.PGMSK;
-      const password = "";
   
       if (req.session.item.type === "subscription") {
         try {
@@ -603,7 +714,7 @@ export default class CheckoutController {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+              Authorization: CheckoutController.fetchAuthKey(),
             },
             body: JSON.stringify(bodySubscriptionOrder),
           });
@@ -670,7 +781,7 @@ export default class CheckoutController {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Basic ${base64.encode(`${user}:${password}`)}`,
+              Authorization: CheckoutController.fetchAuthKey(),
             },
             body: JSON.stringify(bodyPackOrder),
           }).catch(err => {
