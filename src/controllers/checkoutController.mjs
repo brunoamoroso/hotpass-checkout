@@ -154,32 +154,32 @@ export default class CheckoutController {
 
     // if paid we send the user directly to the success
     const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
+    let data = {};
     if(paidOrdersResult.data.length > 0){
-      if(item.type === "subscription"){
-        const data = {
+      if(req.session.item.type === "subscription"){
+        data = {
           customer_chat_id: req.session.customer.code,
-          plan_id: req.session.customer.id,
+          plan_id: req.session.item.id,
           order_id: paidOrdersResult.data[0].id,
           type_item_bought: "subscription",
           bot_name: req.session.botName,
         };
-
-        axios.post(webhookURL, data).catch(err => {
-          console.dir(err, {depth: null});
-        });
-        return res.redirect("success");
       }
 
-      if(item.type === "pack"){
-        const data = {
+      if(req.session.item.type === "pack"){
+        data = {
           customer_chat_id: req.session.customer.code,
           pack_id: req.session.item.id,
           type_item_bought: "pack",
           bot_name: req.session.botName,
         };
-        axios.post(webhookURL, data);
-        return res.redirect("success");
       }
+
+      axios.post(webhookURL, data).catch(err => {
+        console.dir(err, {depth: null});
+      });
+      
+      return res.redirect("/checkout/success");
     }
 
     // if there's a pending one it'll cancel
