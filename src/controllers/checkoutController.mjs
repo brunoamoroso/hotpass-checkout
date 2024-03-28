@@ -249,11 +249,11 @@ export default class CheckoutController {
           name: "Pix",
           type: "pix"
         },
-        {
-          icon: '<i class="bi bi-credit-card-fill"></i>',
-          name: "Cartão de Crédito",
-          type: "credit_card",
-        }
+        // {
+        //   icon: '<i class="bi bi-credit-card-fill"></i>',
+        //   name: "Cartão de Crédito",
+        //   type: "credit_card",
+        // }
       ];
 
       res.render('checkout/choosePayment', {
@@ -374,11 +374,11 @@ export default class CheckoutController {
             name: "Pix",
             type: "pix"
           },
-          {
-            icon: '<i class="bi bi-credit-card-fill"></i>',
-            name: "Cartão de Crédito",
-            type: "credit_card",
-          }
+          // {
+          //   icon: '<i class="bi bi-credit-card-fill"></i>',
+          //   name: "Cartão de Crédito",
+          //   type: "credit_card",
+          // }
         ];
 
         return res.render("checkout/choosePayment", { paymentTypes, item: req.session.item, stepper });
