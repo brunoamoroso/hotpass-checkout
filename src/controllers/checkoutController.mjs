@@ -16,8 +16,20 @@ import priceFormat from "../utils/priceFormat.mjs";
 
 configDotenv();
 
-export default class CheckoutController {
+const paymentTypes = [
+  {
+    icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
+    name: "Pix",
+    type: "pix"
+  },
+  {
+    icon: '<i class="bi bi-credit-card-fill"></i>',
+    name: "Cartão de Crédito",
+    type: "credit_card",
+  }
+];
 
+export default class CheckoutController {
   static fetchAuthKey(){
     const user = process.env.PGMSK;
     const password = "";
@@ -243,19 +255,6 @@ export default class CheckoutController {
       req.session.customerCards = customerCards;
       req.session.save();
 
-      const paymentTypes = [
-        {
-          icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
-          name: "Pix",
-          type: "pix"
-        },
-        // {
-        //   icon: '<i class="bi bi-credit-card-fill"></i>',
-        //   name: "Cartão de Crédito",
-        //   type: "credit_card",
-        // }
-      ];
-
       res.render('checkout/choosePayment', {
         item: req.session.item,
         customer: req.session.customer,
@@ -367,19 +366,6 @@ export default class CheckoutController {
         req.session.customer.id = result.id;
         req.session.customer = customer;
         req.session.save();
-
-        const paymentTypes = [
-          {
-            icon: '<img src="/imgs/pix_logo.svg" alt="pix icon" height="16" />',
-            name: "Pix",
-            type: "pix"
-          },
-          // {
-          //   icon: '<i class="bi bi-credit-card-fill"></i>',
-          //   name: "Cartão de Crédito",
-          //   type: "credit_card",
-          // }
-        ];
 
         return res.render("checkout/choosePayment", { paymentTypes, item: req.session.item, stepper });
       }
