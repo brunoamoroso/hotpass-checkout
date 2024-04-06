@@ -43,8 +43,6 @@ export default class CheckoutController {
     const userId = req.params.id;
     let itemId = req.params.itemId;
 
-    let customerExists = false;
-
     let item = {};
 
     let stepper = {
@@ -247,7 +245,7 @@ export default class CheckoutController {
         req.session.customer.id
       );
 
-      const customerCards = cardsResult.data.forEach((card) => {
+      const customerCards = cardsResult.data.map((card) => {
         card.customerId = req.session.customer.id;
         return card;
       });
@@ -405,21 +403,6 @@ export default class CheckoutController {
           const botConfigsModel = getModelByTenant(req.session.botName + "db", "BotConfig", botConfigSchema);
           const botConfigs = await botConfigsModel.findOne().lean();
 
-          // const adjustedSplitRules = botConfigs.split_rules.map((rule) => {
-          //   return {
-          //     amount: rule.amount,
-          //     type: rule.type,
-          //     recipientId: rule.recipient_id,
-          //     options: {
-          //       chargeProcessingFee: rule.options.charge_processing_fee,
-          //       chargeRemainderFee: rule.options.charge_remainder_fee,
-          //       liable: rule.options.liable
-          //     }
-          //   }
-          // });
-
-          // req.session.customer.metadata = {};
-
           const bodyPixOrder = {
             code: req.session.item.id,
             items: [
@@ -447,11 +430,6 @@ export default class CheckoutController {
             }],
             closed: true
           }
-
-          // console.dir(bodyPixOrder, {depth:null});
-
-          // const ordersController = new OrdersController(client);
-          // const {result} = await ordersController.createOrder(bodyPixOrder);
 
           const result = await fetch("https://api.pagar.me/core/v5/orders", {
             method: "POST",
@@ -484,7 +462,6 @@ export default class CheckoutController {
         break;
 
       case "credit_card":
-        console.log(req.session.customerCards);
           try{ 
             if(req.session.customerCards){
                 res.render("checkout/review", {
