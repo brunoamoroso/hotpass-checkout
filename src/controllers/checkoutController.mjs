@@ -380,6 +380,8 @@ export default class CheckoutController {
 
   static async choosePaymentPost(req, res) {
     const { paymentMethods } = req.body || {};
+    req.session.paymentMethod = paymentMethods;
+    req.session.save();
 
     const stepper = {
       step1: {
@@ -456,9 +458,9 @@ export default class CheckoutController {
           };
 
           res.render("checkout/review", {
+            reviewView: true,
             item: req.session.item,
             customer: req.session.customer,
-            customerExists: true,
             qrCode,
             stepper,
             dynamicURL: process.env.CHECKOUT_DOMAIN,
@@ -471,12 +473,12 @@ export default class CheckoutController {
 
       case "credit_card":
         try {
-          if (req.session.customerCards) {
+          if (req.session.customerCards.length > 0) {
             res.render("checkout/review", {
+              reviewView: true,
               item: req.session.item,
               customer: req.session.customer,
               customerCards: req.session.customerCards,
-              customerExists: true,
               stepper,
               dynamicURL: process.env.CHECKOUT_DOMAIN,
             });
@@ -620,7 +622,7 @@ export default class CheckoutController {
     const botConfigs = await BotConfigsModel.findOne().lean();
     const webhookURL = process.env.BOTS_DOMAIN + req.session.botName;
 
-    if (req.session.paymentType === "pix") {
+    if (req.session.paymentMethod === "pix") {
       try {
         const orderController = new OrdersController(client);
         const { result, ...httpResponse } = await orderController.getOrder(
@@ -673,7 +675,6 @@ export default class CheckoutController {
           reviewView: true,
           item: req.session.item,
           customer: req.session.customer,
-          customerExists: true,
           qrCode: req.session.qrCode,
           stepper,
           dynamicURL: process.env.CHECKOUT_DOMAIN,
@@ -683,7 +684,7 @@ export default class CheckoutController {
       }
     }
 
-    if (req.session.paymentType === "credit_card") {
+    if (req.session.paymentMethod === "credit_card") {
       const { cardsRadio } = req.body;
 
       if (req.session.item.type === "subscription") {
@@ -711,8 +712,10 @@ export default class CheckoutController {
               body: JSON.stringify(bodySubscriptionOrder),
             }
           );
+          
+          const response = await createSubscription.json();
 
-          if (createSubscription.status === 200) {
+          if (response.status === 'active') {
             const response = await createSubscription.json();
             const data = {
               customer_chat_id: req.session.customer.code,
@@ -723,22 +726,22 @@ export default class CheckoutController {
             axios.post(webhookURL, data);
             return res.redirect("success");
           } else {
-            throw new Error(await createSubscription.json());
+            console.dir(response, {depth: null});
+            throw new Error(response);
           }
         } catch (err) {
-          console.log(err);
+          console.dir(err, {depth:null});
           res.render("checkout/review", {
             reviewView: true,
             item: req.session.item,
             customer: req.session.customer,
             customerCards: req.session.customerCards,
-            customerExists: true,
             stepper,
             dynamicURL: process.env.CHECKOUT_DOMAIN,
             alertMessage: {
               type: "danger",
               message:
-                "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde",
+                "Tivemos um problema ao efetuar o seu pagamento. Tente utilizar outro cartão.",
             },
           });
         }
@@ -786,7 +789,7 @@ export default class CheckoutController {
           });
 
           const response = await buyPack.json();
-          console.log(response);
+          console.dir(response, {depth: null});
 
           if (response.status === "paid") {
             const data = {
@@ -801,13 +804,12 @@ export default class CheckoutController {
 
           throw new Error(response);
         } catch (err) {
-          console.log(err);
+          console.dir(err, {depth: null});
           return res.render("checkout/review", {
             reviewView: true,
             item: req.session.item,
             customer: req.session.customer,
             customerCards: req.session.customerCards,
-            customerExists: true,
             stepper,
             dynamicURL: process.env.CHECKOUT_DOMAIN,
             alertMessage: {
@@ -888,7 +890,6 @@ export default class CheckoutController {
         item: req.session.item,
         customer: req.session.customer,
         customerCards: result.data,
-        customerExists: true,
         stepper,
         dynamicURL: process.env.CHECKOUT_DOMAIN,
         alertMessage: {
@@ -913,7 +914,6 @@ export default class CheckoutController {
         item: req.session.item,
         customer: req.session.customer,
         customerCards: req.session.customerCards,
-        customerExists: true,
         stepper,
         dynamicURL: process.env.CHECKOUT_DOMAIN,
         alertMessage: { type: "danger", message: errMessage },
