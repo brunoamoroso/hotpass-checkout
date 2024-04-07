@@ -727,10 +727,9 @@ export default class CheckoutController {
             return res.redirect("success");
           } else {
             console.dir(response, {depth: null});
-            throw new Error(response);
+            throw new Error('Tivemos um problema ao efetuar o pagamento. Tente utilizar outro cartão ou pagar por pix.');
           }
         } catch (err) {
-          console.dir(err, {depth:null});
           res.render("checkout/review", {
             reviewView: true,
             item: req.session.item,
@@ -741,7 +740,7 @@ export default class CheckoutController {
             alertMessage: {
               type: "danger",
               message:
-                "Tivemos um problema ao efetuar o seu pagamento. Tente utilizar outro cartão.",
+                "Tivemos um problema ao efetuar o seu pagamento. Tente utilizar outro cartão ou pagar por pix.",
             },
           });
         }
@@ -789,7 +788,6 @@ export default class CheckoutController {
           });
 
           const response = await buyPack.json();
-          console.dir(response, {depth: null});
 
           if (response.status === "paid") {
             const data = {
@@ -815,7 +813,7 @@ export default class CheckoutController {
             alertMessage: {
               type: "danger",
               message:
-                "Tivemos um problema ao efetuar o seu pagamento. Tente novamente mais tarde",
+                "Tivemos um problema ao efetuar o seu pagamento. Tente utilizar outro cartão ou pagar por pix.",
             },
           });
         }
