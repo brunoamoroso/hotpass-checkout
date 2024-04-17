@@ -94,18 +94,16 @@
                                   <span class="order-total-price">{{item.price}}</span>
                                 </div>
                               </div>
-
-                              {{#if customerExists}}
-                                <div class="d-grid pt-5">
-                                  <button class="btn btn-primary" onclick="handleReviewSubmit()">
-                                    <div id="payment-spinner" style="width: 1rem; height: 1rem; border-width: 0.18rem; display: none;" class="spinner-border me-2" role="status">
-                                    </div>
-                                    <span id="payment-text">
-                                      Confirmar Compra
-                                    </span>
-                                  </button>
-                                </div>
-                              {{/if}}
+                
+                              <div class="d-grid pt-5">
+                                <button class="btn btn-primary" onclick="handleReviewSubmit()">
+                                  <div id="payment-spinner" style="width: 1rem; height: 1rem; border-width: 0.18rem; display: none;" class="spinner-border me-2" role="status">
+                                  </div>
+                                  <span id="payment-text">
+                                    Confirmar Compra
+                                  </span>
+                                </button>
+                              </div>
                             </aside>
                           </div>
                         </div>
@@ -129,18 +127,6 @@
                             <span class="order-total-price">{{item.price}}</span>
                           </div>
                         </div>
-
-                        {{#if customerExists}}
-                          <div class="d-grid pt-5">
-                            <button class="btn btn-primary" onclick="handleReviewSubmit()">
-                              <div id="payment-spinner" style="width: 1rem; height: 1rem; border-width: 0.18rem; display: none;" class="spinner-border me-2" role="status">
-                              </div>
-                              <span id="payment-text">
-                                Confirmar Compra
-                              </span>
-                            </button>
-                          </div>
-                        {{/if}}
                       </aside>
                     </div>
                   </div>
@@ -154,7 +140,7 @@
       <div class="row mt-5 text-center">
         <div class="col offset-md-2">
           <div class="secure-space d-flex flex-row gap-2 justify-content-center align-items-center">
-            <img src="/imgs/justus_logo.svg" alt="JustUs Logo" height="32"> |&nbsp;&nbsp;
+            <img src="/imgs/hotpass_logo.svg" alt="JustUs Logo" height="32"> |&nbsp;&nbsp;
             <i class="bi bi-shield-fill-check"></i>
             <span>Ambiente Seguro</span>
           </div>
