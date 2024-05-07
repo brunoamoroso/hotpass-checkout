@@ -107,8 +107,10 @@ export default class CheckoutController {
           type: "pack",
         };
 
+        
         req.session.item = item;
         req.session.save();
+        console.dir(req.session, {depth: null});
       } catch (err) {
         console.log(err);
       }
@@ -402,7 +404,7 @@ export default class CheckoutController {
       },
     };
 
-    console.log(req.session, {depth: null});
+    console.dir(req.session, {depth: null});
 
     switch (paymentMethods) {
       case "pix":
