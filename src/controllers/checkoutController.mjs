@@ -402,6 +402,8 @@ export default class CheckoutController {
       },
     };
 
+    console.log(req.session, {depth: null});
+
     switch (paymentMethods) {
       case "pix":
         try {
@@ -410,6 +412,7 @@ export default class CheckoutController {
             "BotConfig",
             botConfigSchema
           );
+
           const botConfigs = await botConfigsModel.findOne().lean();
 
           const bodyPixOrder = {
