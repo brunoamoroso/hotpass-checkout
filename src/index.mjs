@@ -46,12 +46,11 @@ store.on('error', (error) => {
 app.use(session({
   name: "session",
   secret: "justus_secret",
-  resave: false,
   saveUninitialized: false,
   store: store,
   sameSite: 'none',
   cookie: {
-    secure: false,
+    secure: true,
     maxAge: 360000,
     httpOnly: true,
   }
