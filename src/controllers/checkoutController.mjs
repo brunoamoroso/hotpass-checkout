@@ -379,9 +379,12 @@ export default class CheckoutController {
   }
 
   static async choosePaymentPost(req, res) {
+    console.dir(req.session, {depth: null});
     const { paymentMethods } = req.body || {};
     req.session.paymentMethod = paymentMethods;
     req.session.save();
+
+    console.dir(req.session, {depth: null});
 
     const stepper = {
       step1: {
@@ -410,6 +413,7 @@ export default class CheckoutController {
             "BotConfig",
             botConfigSchema
           );
+
           const botConfigs = await botConfigsModel.findOne().lean();
 
           const bodyPixOrder = {
