@@ -37,6 +37,10 @@ const MongoDBStore = ConnectMongoDBSession(session);
 const store = new MongoDBStore({
   uri: process.env.MONGODB_URI + "checkoutSessionsDB",
   collection: "express-sessions"
+});
+
+store.on('error', (error) => {
+  console.dir(error, {depth: null});
 })
 
 app.use(session({
