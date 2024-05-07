@@ -110,7 +110,7 @@ export default class CheckoutController {
         
         req.session.item = item;
         req.session.save();
-        console.dir(req.session, {depth: null});
+        console.log(req.session.id);
       } catch (err) {
         console.log(err);
       }
@@ -383,7 +383,6 @@ export default class CheckoutController {
   static async choosePaymentPost(req, res) {
     const { paymentMethods } = req.body || {};
     req.session.paymentMethod = paymentMethods;
-    req.session.save();
 
     const stepper = {
       step1: {
@@ -404,7 +403,7 @@ export default class CheckoutController {
       },
     };
 
-    console.dir(req.session, {depth: null});
+    console.log(req.session.id);
 
     switch (paymentMethods) {
       case "pix":
