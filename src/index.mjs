@@ -43,6 +43,8 @@ store.on('error', (error) => {
   console.dir(error, {depth: null});
 })
 
+app.enable('trust proxy');
+
 app.use(session({
   name: "session",
   secret: "justus_secret",
