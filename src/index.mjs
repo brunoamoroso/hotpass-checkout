@@ -49,6 +49,8 @@ app.use(session({
   name: "session",
   secret: "justus_secret",
   saveUninitialized: false,
+  resave: false,
+  proxy: true,
   store: store,
   sameSite: 'none',
   cookie: {
