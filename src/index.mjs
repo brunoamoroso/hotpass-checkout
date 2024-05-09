@@ -5,6 +5,8 @@ import exphbs from "express-handlebars";
 import session from "express-session";
 import ConnectMongoDBSession from "connect-mongodb-session";
 
+export const maxDuration = 60;
+
 //get dirname
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "npm run build",
     "start": "nodemon ./src/index.mjs localhost 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
