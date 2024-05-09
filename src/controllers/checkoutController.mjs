@@ -107,8 +107,10 @@ export default class CheckoutController {
           type: "pack",
         };
 
+        
         req.session.item = item;
         req.session.save();
+        console.log(req.session.id);
       } catch (err) {
         console.log(err);
       }
@@ -381,7 +383,6 @@ export default class CheckoutController {
   static async choosePaymentPost(req, res) {
     const { paymentMethods } = req.body || {};
     req.session.paymentMethod = paymentMethods;
-    req.session.save();
 
     const stepper = {
       step1: {
@@ -402,6 +403,8 @@ export default class CheckoutController {
       },
     };
 
+    console.log(req.session.id);
+
     switch (paymentMethods) {
       case "pix":
         try {
@@ -410,6 +413,7 @@ export default class CheckoutController {
             "BotConfig",
             botConfigSchema
           );
+
           const botConfigs = await botConfigsModel.findOne().lean();
 
           const bodyPixOrder = {

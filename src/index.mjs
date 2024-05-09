@@ -5,6 +5,8 @@ import exphbs from "express-handlebars";
 import session from "express-session";
 import ConnectMongoDBSession from "connect-mongodb-session";
 
+export const maxDuration = 60;
+
 //get dirname
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -37,19 +39,25 @@ const MongoDBStore = ConnectMongoDBSession(session);
 const store = new MongoDBStore({
   uri: process.env.MONGODB_URI + "checkoutSessionsDB",
   collection: "express-sessions"
+});
+
+store.on('error', (error) => {
+  console.dir(error, {depth: null});
 })
+
+app.set('trust proxy', 1);
 
 app.use(session({
   name: "session",
   secret: "justus_secret",
-  resave: false,
   saveUninitialized: false,
+  resave: false,
+  proxy: true,
   store: store,
   sameSite: 'none',
   cookie: {
-    secure: false,
+    secure: true,
     maxAge: 360000,
-    httpOnly: true,
   }
 }));
 
@@ -64,3 +72,5 @@ app.use(function (req, res){
 app.listen(3000, () => {
   console.log("Server running on 3000");
 });
+
+export default app;
