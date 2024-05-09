@@ -43,7 +43,7 @@ store.on('error', (error) => {
   console.dir(error, {depth: null});
 })
 
-app.enable('trust proxy');
+app.set('trust proxy', 1);
 
 app.use(session({
   name: "session",
@@ -56,7 +56,6 @@ app.use(session({
   cookie: {
     secure: true,
     maxAge: 360000,
-    httpOnly: true,
   }
 }));
 
