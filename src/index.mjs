@@ -26,11 +26,11 @@ app.set("views", path.join(__dirname, "views"));
 //set static directory
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use(
-  express.urlencoded({
-    extended: true,
-  })
-);
+// app.use(
+//   express.urlencoded({
+//     extended: true,
+//   })
+// );
 
 app.use(express.json());
 
@@ -44,8 +44,6 @@ const store = new MongoDBStore({
 store.on('error', (error) => {
   console.dir(error, {depth: null});
 })
-
-app.set('trust proxy', 1);
 
 app.use(session({
   name: "session",
@@ -69,8 +67,5 @@ app.use(function (req, res){
   res.render('404', {layout: false});
 });
 
-app.listen(3000, () => {
-  console.log("Server running on 3000");
-});
 
 export default app;
